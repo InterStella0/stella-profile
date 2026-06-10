@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <rect width="240" height="240" fill="#fce6ef"/>
+  <circle cx="120" cy="96" r="48" fill="#f4b9d2"/>
+  <circle cx="104" cy="92" r="6" fill="#7a4a5e"/>
+  <circle cx="138" cy="92" r="6" fill="#7a4a5e"/>
+  <path d="M104 116 q16 14 32 0" fill="none" stroke="#7a4a5e" stroke-width="4" stroke-linecap="round"/>
+  <path d="M44 224 q76 -78 152 0 z" fill="#f4b9d2"/>
+  <text x="120" y="206" font-family="'Indie Flower', cursive" font-size="22"
+        fill="#b56a8c" text-anchor="middle">your selfie here</text>
+</svg>

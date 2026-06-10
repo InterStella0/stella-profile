@@ -1,0 +1,57 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --ink: #5b4a52;
+  --ink-soft: #8a7682;
+  --pink-desk: #f3aac4;
+  --pink-desk-dark: #e58bab;
+  --paper: #fffdf6;
+  --rule: #c9d6ef;
+  --margin-line: #f0a6c0;
+  --tape: rgba(255, 246, 180, 0.72);
+  --bookmark-blue: #5c8fe0;
+  --bookmark-blue-dark: #3f6fc0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Indie Flower', 'Comic Sans MS', cursive;
+  color: var(--ink);
+  /* pinkish "table" the notebook rests on */
+  background-color: var(--pink-desk);
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.35) 0, transparent 38%),
+    radial-gradient(circle at 82% 78%, rgba(213, 110, 150, 0.4) 0, transparent 46%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.05) 0 14px,
+      rgba(0, 0, 0, 0.025) 14px 28px
+    );
+  background-attachment: fixed;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}

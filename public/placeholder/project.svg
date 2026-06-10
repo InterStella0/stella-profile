@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 180">
+  <rect width="260" height="180" fill="#eef3ff"/>
+  <rect x="36" y="34" width="188" height="86" rx="8" fill="#c9d8ff"/>
+  <circle cx="86" cy="70" r="16" fill="#fff4b8"/>
+  <path d="M52 120 l46 -44 38 30 44 -52 50 66 z" fill="#a9bdf0"/>
+  <text x="130" y="158" font-family="'Indie Flower', cursive" font-size="22"
+        fill="#5b6da8" text-anchor="middle">project image</text>
+</svg>

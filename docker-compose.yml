@@ -1,0 +1,22 @@
+services:
+  # Production — builds the app and serves it via nginx on port 8080
+  app:
+    build:
+      context: .
+      target: production
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  # Development — hot-reload Vite dev server on port 5173
+  dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules        # keep container's node_modules isolated
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    profiles:
+      - dev
