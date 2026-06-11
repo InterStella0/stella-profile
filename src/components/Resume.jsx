@@ -64,7 +64,7 @@ export default function Resume() {
       {/* ── Right column ── */}
       <div className="resume__right">
         <div className="resume__watermark" aria-hidden="true">
-          RESUME<br />RESUME
+          SKILLS<br />SKILLS
         </div>
 
         <h2 className="resume__section-title" style={{ position: 'relative', zIndex: 1 }}>

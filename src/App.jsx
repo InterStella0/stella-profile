@@ -22,9 +22,6 @@ export default function App() {
       <About />
       <Resume />
       <Work />
-      <div className="desk">
-        <Book />
-      </div>
     </>
   );
 }
