@@ -223,7 +223,7 @@ export const allProjects = [
     link: 'https://github.com/InterStella0/stella_bot',
     tags: ['Python'],
   },
-];
+].sort((a, b) => b.year - a.year);
 
 export const featuredProjects = allProjects.filter(p => !p.secret);
 

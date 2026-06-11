@@ -17,6 +17,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
 }
 
 body {
@@ -162,7 +163,7 @@ body {
 .hero__title {
   font-family: 'Nunito', sans-serif;
   font-weight: 900;
-  font-size: clamp(64px, 9vw, 120px);
+  font-size: clamp(32px, 9vw, 120px);
   color: var(--cream);
   line-height: 0.92;
   letter-spacing: -3px;
@@ -187,13 +188,13 @@ body {
 }
 
 .hero__outline-line--1 {
-  font-size: clamp(50px, 6.8vw, 90px);
+  font-size: clamp(24px, 6.8vw, 90px);
 }
 .hero__outline-line--2 {
-  font-size: clamp(62px, 8.2vw, 108px);
+  font-size: clamp(30px, 8.2vw, 108px);
 }
 .hero__outline-line--3 {
-  font-size: clamp(74px, 9.8vw, 130px);
+  font-size: clamp(36px, 9.8vw, 130px);
 }
 
 .hero__social {
@@ -538,10 +539,10 @@ body:has(#contact.contact--active)::before {
 .timeline__item::before {
   content: '✦';
   position: absolute;
-  left: -23px;
+  left: -26px;
   top: 2px;
   color: var(--orange);
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -619,6 +620,12 @@ body:has(#contact.contact--active)::before {
 }
 
 /* Right column content */
+.software-skills-row {
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 1;
+}
+
 .skills-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1029,6 +1036,35 @@ body:has(#contact.contact--active)::before {
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 12px 50px rgba(0, 0, 0, 0.5);
+  animation: lb-img-fade 0.22s ease;
+}
+
+@keyframes lb-img-fade {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.lightbox__spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.lightbox__spinner::after {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: lb-spin 0.7s linear infinite;
+}
+
+@keyframes lb-spin {
+  to { transform: rotate(360deg); }
 }
 
 .lightbox__close {

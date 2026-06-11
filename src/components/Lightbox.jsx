@@ -3,10 +3,13 @@ import { LuX, LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 
 export default function Lightbox({ images, title, startIndex = 0, onClose }) {
   const [idx, setIdx] = useState(startIndex);
+  const [isLoading, setIsLoading] = useState(true);
   const count = images.length;
 
   const prev = useCallback(() => setIdx(i => (i - 1 + count) % count), [count]);
   const next = useCallback(() => setIdx(i => (i + 1) % count), [count]);
+
+  useEffect(() => { setIsLoading(true); }, [idx]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -25,7 +28,15 @@ export default function Lightbox({ images, title, startIndex = 0, onClose }) {
       </button>
 
       <div className="lightbox__stage" onClick={e => e.stopPropagation()}>
-        <img className="lightbox__img" src={images[idx]} alt={`${title} ${idx + 1}`} />
+        {isLoading && <div className="lightbox__spinner" />}
+        <img
+          key={idx}
+          className="lightbox__img"
+          src={images[idx]}
+          alt={`${title} ${idx + 1}`}
+          onLoad={() => setIsLoading(false)}
+          style={isLoading ? { opacity: 0 } : undefined}
+        />
 
         {count > 1 && (
           <>

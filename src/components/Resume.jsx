@@ -68,18 +68,19 @@ export default function Resume() {
         </div>
 
         <h2 className="resume__section-title" style={{ position: 'relative', zIndex: 1 }}>
-          Technical skills
+          Skills
         </h2>
 
-        <div className="skills-grid">
-          <div>
-            <div className="skills__label">Software Skills</div>
-            <div className="skill-icons">
-              {skills.software.map((s, i) => (
-                <div key={i} className="skill-icon">{s}</div>
-              ))}
-            </div>
+        <div className="software-skills-row">
+          <div className="skills__label">Software Skills</div>
+          <div className="skill-icons">
+            {skills.software.map((s, i) => (
+              <div key={i} className="skill-icon">{s}</div>
+            ))}
           </div>
+        </div>
+
+        <div className="skills-grid">
           <div>
             <div className="skills__label">Programming Languages</div>
             <div className="skill-bars">
@@ -96,22 +97,21 @@ export default function Resume() {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="frameworks-section">
-          <div className="skills__label">Frameworks</div>
-          <div className="skill-bars">
-            {skills.frameworks.map((f, i) => (
-              <div key={i} className="skill-bar-item">
-                <div className="skill-bar-header">
-                  <span className="skill-bar-name">{f.name}</span>
-                  <span className="skill-bar-meta">{f.level} · {f.percent}%</span>
+          <div>
+            <div className="skills__label">Frameworks</div>
+            <div className="skill-bars">
+              {skills.frameworks.map((f, i) => (
+                <div key={i} className="skill-bar-item">
+                  <div className="skill-bar-header">
+                    <span className="skill-bar-name">{f.name}</span>
+                    <span className="skill-bar-meta">{f.level} · {f.percent}%</span>
+                  </div>
+                  <div className="skill-bar-track">
+                    <div className="skill-bar-fill" style={{ width: `${f.percent}%` }} />
+                  </div>
                 </div>
-                <div className="skill-bar-track">
-                  <div className="skill-bar-fill" style={{ width: `${f.percent}%` }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
