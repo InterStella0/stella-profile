@@ -538,10 +538,10 @@ body:has(#contact.contact--active)::before {
 .timeline__item::before {
   content: '✦';
   position: absolute;
-  left: -19px;
+  left: -23px;
   top: 2px;
   color: var(--orange);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -898,11 +898,25 @@ body:has(#contact.contact--active)::before {
   padding: 18px 20px 22px;
 }
 
+.work-card__title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
 .work-card__title {
   font-family: 'Nunito', sans-serif;
   font-weight: 700;
   font-size: 18px;
-  margin-bottom: 6px;
+}
+
+.work-card__year {
+  font-size: 12px;
+  font-weight: 700;
+  color: #666;
+  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .work-card__blurb {

@@ -13,7 +13,7 @@ const hobbyIcons = { Code: LuCode, Palette: LuPalette, Cat: LuCat, Scissors: LuS
 
 export default function Resume() {
   return (
-    <section className="resume" id="resume">
+    <section className="resume" id="skills">
       <div className="resume__left">
         <h2 className="resume__section-title">Education</h2>
         <ul className="timeline">

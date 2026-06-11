@@ -32,7 +32,7 @@ export default function Nav({ scrolled }) {
 
       <ul className="nav__links">
         <li><a href="#about">About me</a></li>
-        <li><a href="#resume">Resume</a></li>
+        <li><a href="#skills">Skills</a></li>
         <li><a href="#work">Work</a></li>
         <li>
           <a href="#contact" className="nav__cta" onClick={handleContactClick}>

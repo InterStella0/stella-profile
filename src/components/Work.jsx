@@ -33,7 +33,10 @@ export default function Work() {
                 )}
               </div>
               <div className="work-card__body">
-                <div className="work-card__title">{p.title}</div>
+                <div className="work-card__title-row">
+                  <span className="work-card__title">{p.title}</span>
+                  {p.year && <span className="work-card__year">{p.year}</span>}
+                </div>
                 <div className="work-card__blurb">{p.blurb}</div>
                 {p.tags?.length > 0 && (
                   <div className="work-card__tags">

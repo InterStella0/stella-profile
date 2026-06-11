@@ -1,8 +1,8 @@
 // ─── Edit everything about you here ──────────────────────────────────────────
 
 export const personal = {
-  name: 'queeniemella',
-  tagline: 'designer & creative developer',
+  name: 'mella',
+  tagline: 'fullstack & creative developer',
   photoHero:  '/selfies/real_selfie.png',
   photoAbout: '/selfies/art_writing.png',
   bio: 'Unironically spread love and being really nice should be our priority! If you buy more bed room, you will have less bedroom!',
@@ -73,14 +73,14 @@ export const activities = [
 ];
 
 export const skills = {
-  software: ['PS', 'AI', 'Xd'],
+  software: ['PS', 'AI', 'Xd', 'QGIS'],
   coding: [
     { name: 'Python',     level: 'Mastered',     percent: 100 },
     { name: 'HTML/CSS',   level: 'Mastered',     percent: 95  },
     { name: 'Rust',       level: 'Advanced',     percent: 70  },
     { name: 'JavaScript/TypeScript', level: 'Advanced', percent: 60  },
+    { name: 'Java',        level: 'Intermediate', percent: 55  },
     { name: 'C#',        level: 'Intermediate', percent: 50  },
-    { name: 'Java',        level: 'Intermediate', percent: 45  },
     { name: 'C',        level: 'Intermediate', percent: 40  },
     { name: 'PHP',        level: 'Beginner', percent: 30  },
   ],
@@ -117,6 +117,7 @@ export const hobbies = [
 export const allProjects = [
   {
     title: 'ZEGraph',
+    year: 2025,
     images: [
     '/projects/zegraph.png',
     '/projects/zegraph-maps.png',
@@ -126,10 +127,11 @@ export const allProjects = [
     ],
     blurb: 'Zombie escape player statistics!',
     link: 'https://zegraph.xyz',
-    tags: ['Rust', 'Next.js', 'Poem'],
+    tags: ['Rust', 'Next.js', 'Poem', 'TypeScript'],
   },
   {
     title: 'Stemoji',
+    year: 2025,
     image: 'https://storage.ko-fi.com/cdn/useruploads/display/1b69b8fc-f613-4eee-910a-16b92d783bf9_steal_emoji.gif',
     blurb: 'Discord emoji bot that can be self-hosted.',
     link: 'https://github.com/InterStella0/stemoji',
@@ -137,13 +139,23 @@ export const allProjects = [
   },
   {
     title: 'Discord Video Downloader',
+    year: 2025,
     image: 'https://storage.ko-fi.com/cdn/useruploads/display/de7bfb0a-0cda-42b3-a753-9e78a731d95a_demo-downlo-yt-ezgif.com-video-to-gif-converter.gif',
     blurb: 'Self hosted discord bot that allows for video link downloads, such as YouTube, Twitch Clips, and other platforms.',
     link: 'https://github.com/InterStella0/discord-video-downloader',
     tags: ['Python'],
   },
   {
+    title: 'Flash flood prediction through Machine Learning',
+    year: 2025,
+    image: '/placeholder/github.svg',
+    blurb: 'A data-driven machine learning model for predicting flash flood occurrence for the entire Malaysia.',
+    secret: true,
+    tags: ['Python', 'QGIS'],
+  },
+  {
     title: 'CS2 Console HUD',
+    year: 2024,
     image: 'https://raw.githubusercontent.com/InterStella0/cs2_console_hud/main/asset/showcase.gif',
     blurb: 'Mangohud addon program for CS2.',
     link: 'https://github.com/InterStella0/cs2_console_hud',
@@ -151,6 +163,7 @@ export const allProjects = [
   },
   {
     title: 'starlight',
+    year: 2022,
     image: '/placeholder/github.svg',
     blurb: 'Discord.py utility library for discord developers.',
     link: 'https://github.com/InterStella0/starlight-dpy',
@@ -158,6 +171,7 @@ export const allProjects = [
   },
   {
     title: 'RTU Monitoring System',
+    year: 2024,
     images: [
         '/projects/RTU1.png',
         '/projects/RTU2.png',
@@ -165,34 +179,45 @@ export const allProjects = [
     ],
     blurb: 'Proprietary website made for monitoring RTU Stations for the entire Malaysia.',
     secret: true,
-    tags: ['React.js', 'Poem', 'Rust'],
+    tags: ['React.js', 'Poem', 'Rust', 'TypeScript'],
   },
   {
     title: 'Geospatial database search',
+    year: 2023,
     images: [
         '/projects/search-db.png',
         '/projects/search-db-2.png',
     ],
     blurb: 'A system that can view geospatial data and can be searched by attributes.',
     secret: true,
-    tags: ['Python', 'arcpy', 'Django', 'React.js'],
+    tags: ['Python', 'arcpy', 'Django', 'React.js', 'JavaScript', 'ArcMap'],
+  },
+  {
+    title: 'AI Lip reading video platform',
+    year: 2023,
+    image: '/placeholder/github.svg',
+    blurb: 'Integration of lip reading machine learning model with a YouTube like platform.',
+    secret: true,
+    tags: ['Python', 'JavaScript'],
   },
   {
     title: 'discord iot bot',
+    year: 2022,
     image: '/projects/AC.png',
     blurb: 'A personal discord bot that monitor and controls IoT devices.',
-    secret: true,
-    tags: ['Python'],
+    tags: ['Python', 'Arduino'],
   },
   {
     title: 'stella bot website',
+    year: 2021,
     image: '/projects/stella-bot-website.png',
     blurb: 'A website built to integrate with stella bot.',
     link: 'https://github.com/InterStella0/StellaBotWebApp',
-    tags: ['C#', '.Net Core'],
+    tags: ['C#', '.Net Core', 'JavaScript'],
   },
   {
     title: 'stella bot',
+    year: 2020,
     image: '/placeholder/github.svg',
     blurb: 'A personal discord bot that I made where people used it as a reference for their own bots.',
     link: 'https://github.com/InterStella0/stella_bot',
