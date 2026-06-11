@@ -129,13 +129,6 @@ export const allProjects = [
     tags: ['Rust', 'Next.js', 'Poem'],
   },
   {
-    title: 'stella bot',
-    image: '/placeholder/github.svg',
-    blurb: 'A personal discord bot that I made where people used it as a reference for their own bots.',
-    link: 'https://github.com/InterStella0/stella_bot',
-    tags: ['Python'],
-  },
-  {
     title: 'Stemoji',
     image: 'https://storage.ko-fi.com/cdn/useruploads/display/1b69b8fc-f613-4eee-910a-16b92d783bf9_steal_emoji.gif',
     blurb: 'Discord emoji bot that can be self-hosted.',
@@ -148,6 +141,13 @@ export const allProjects = [
     blurb: 'Self hosted discord bot that allows for video link downloads, such as YouTube, Twitch Clips, and other platforms.',
     link: 'https://github.com/InterStella0/discord-video-downloader',
     tags: ['Python'],
+  },
+  {
+    title: 'CS2 Console HUD',
+    image: 'https://raw.githubusercontent.com/InterStella0/cs2_console_hud/main/asset/showcase.gif',
+    blurb: 'Mangohud addon program for CS2.',
+    link: 'https://github.com/InterStella0/cs2_console_hud',
+    tags: ['Rust'],
   },
   {
     title: 'starlight',
@@ -176,6 +176,27 @@ export const allProjects = [
     blurb: 'A system that can view geospatial data and can be searched by attributes.',
     secret: true,
     tags: ['Python', 'arcpy', 'Django', 'React.js'],
+  },
+  {
+    title: 'discord iot bot',
+    image: '/projects/AC.png',
+    blurb: 'A personal discord bot that monitor and controls IoT devices.',
+    secret: true,
+    tags: ['Python'],
+  },
+  {
+    title: 'stella bot website',
+    image: '/projects/stella-bot-website.png',
+    blurb: 'A website built to integrate with stella bot.',
+    link: 'https://github.com/InterStella0/StellaBotWebApp',
+    tags: ['C#', '.Net Core'],
+  },
+  {
+    title: 'stella bot',
+    image: '/placeholder/github.svg',
+    blurb: 'A personal discord bot that I made where people used it as a reference for their own bots.',
+    link: 'https://github.com/InterStella0/stella_bot',
+    tags: ['Python'],
   },
 ];
 

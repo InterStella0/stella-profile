@@ -15,7 +15,7 @@ export default function Work() {
       <em className="work__sparkle work__sparkle--d">✦</em>
       <em className="work__sparkle work__sparkle--e">✦</em>
 
-      <h2 className="work__heading">Work</h2>
+      <h2 className="work__heading">Highlight of my work~</h2>
       <div className="work__grid">
         {allProjects.map((p, i) => {
           const images = p.images ?? (p.image ? [p.image] : []);
