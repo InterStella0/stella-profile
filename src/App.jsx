@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import About from './components/About';
 import Resume from './components/Resume';
 import Work from './components/Work';
+import Supporters from './components/Supporters';
 import Book from './components/Book';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
       <About />
       <Resume />
       <Work />
+      <Supporters />
     </>
   );
 }

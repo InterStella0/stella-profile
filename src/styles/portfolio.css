@@ -1125,6 +1125,71 @@ body:has(#contact.contact--active)::before {
   opacity: 0.85;
 }
 
+/* ── SUPPORTERS ─────────────────────────────────────────────────────────── */
+
+.supporters {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  padding: 80px 60px 100px;
+}
+
+.supporters__sparkle {
+  position: absolute;
+  z-index: 0;
+  color: var(--orange);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  font-style: normal;
+}
+
+.supporters__sparkle--a { font-size: 26px; top: 60px; left: 10%; }
+.supporters__sparkle--b { font-size: 18px; top: 110px; right: 12%; color: var(--gold); }
+.supporters__sparkle--c { font-size: 30px; bottom: 60px; right: 8%; }
+
+.supporters__heading {
+  position: relative;
+  z-index: 1;
+  font-family: 'Nunito', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.supporters__cloud {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 14px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.supporters__pill {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  box-shadow: 0 3px 18px rgba(0, 0, 0, 0.07);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.supporters__pill:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.supporters__pill--0 { background: var(--cream); }
+.supporters__pill--1 { background: var(--orange); }
+.supporters__pill--2 { background: var(--gold); }
+
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 960px) {
@@ -1201,6 +1266,14 @@ body:has(#contact.contact--active)::before {
   .work__grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  .supporters {
+    padding: 60px 28px 80px;
+  }
+
+  .supporters__heading {
+    font-size: 36px;
+  }
 }
 
 @media (max-width: 600px) {
@@ -1213,6 +1286,8 @@ body:has(#contact.contact--active)::before {
   .work::after  { width: 300px; height: 300px; }
   .work__sparkle--b,
   .work__sparkle--d { display: none; }
+
+  .supporters__sparkle--b { display: none; }
 
   .skills-grid {
     grid-template-columns: 1fr;

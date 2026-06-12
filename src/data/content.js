@@ -7,7 +7,7 @@ export const personal = {
   photoAbout: '/selfies/art_writing.png',
   bio: 'Unironically spread love and being really nice should be our priority! If you buy more bed room, you will have less bedroom!',
   longBio:
-    'I am a Software Designer and Developer. I have a passion in software engineer as a whole along with Internet of Things (IoT), and Machine Learning fields. I have built software related to Web, Mobile as well as Geospatial. \n\nI started from self-taught programming at the age of 16 all the way until I went to university and started working. Now I want to reach for the stars~',
+    'I am a Software Designer and Developer. I have a passion in software engineering as a whole along with Internet of Things (IoT), and Machine Learning fields. I have built software for Web, Mobile, and Geospatial applications. \n\nI started from self-taught programming at the age of 16 all the way until I went to university and started working. Now I want to reach for the stars~',
   dob: '26th June 2000',
   nationality: 'Malaysian',
   socialLinks: [
@@ -241,4 +241,17 @@ export const selfie = {
 export const contacts = [
   { kind: 'email', label: 'email', value: personal.contact.email, href: `mailto:${personal.contact.email}` },
   ...personal.socialLinks.map(s => ({ kind: s.key, label: s.key, value: s.label, href: s.href })),
+];
+
+export const supporters = [
+  'Longus Dongus',
+  'Vynd',
+  'Acaro',
+  'Mod',
+  'mangaka',
+  'Planet P',
+  'Kemuri',
+  'Mesturpate',
+  'Resonance',
+  'monke',
 ];
