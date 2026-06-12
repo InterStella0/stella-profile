@@ -516,12 +516,12 @@ body:has(#contact.contact--active)::before {
   padding-left: 22px;
 }
 
-.timeline::before {
+.timeline__item:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 3px;
-  top: 12px;
-  bottom: 12px;
+  left: -19px;
+  top: 24px;
+  bottom: -26px;
   width: 1.5px;
   background: rgba(0, 0, 0, 0.14);
 }
@@ -577,7 +577,7 @@ body:has(#contact.contact--active)::before {
   font-style: italic;
 }
 
-.exp-box .timeline::before {
+.exp-box .timeline__item:not(:last-child)::after {
   background: rgba(0, 0, 0, 0.2);
 }
 
