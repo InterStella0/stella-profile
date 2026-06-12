@@ -254,4 +254,5 @@ export const supporters = [
   'Mesturpate',
   'Resonance',
   'monke',
+  'Aurora',
 ];
