@@ -248,6 +248,7 @@ export const supporters = [
   'Vynd',
   'Acaro',
   'Mod',
+  'Lunariaem',
   'mangaka',
   'Planet P',
   'Kemuri',
