@@ -116,6 +116,14 @@ export const hobbies = [
 
 export const allProjects = [
   {
+    title: 'Stel Time',
+    year: 2026,
+    image: '/projects/stel-time.gif',
+    blurb: 'A discord bot to show the current time of your friends!',
+    link: 'https://github.com/InterStella0/stel-time',
+    tags: ['Python'],
+  },
+  {
     title: 'ZEGraph',
     year: 2025,
     images: [
@@ -244,6 +252,8 @@ export const contacts = [
 ];
 
 export const supporters = [
+  'slyn',
+  'Andrei',
   'Longus Dongus',
   'Vynd',
   'Acaro',
