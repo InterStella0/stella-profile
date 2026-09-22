@@ -4,6 +4,7 @@ import App from './App.jsx';
 import { ContentProvider } from './data/ContentContext.jsx';
 import './styles/global.css';
 import './styles/portfolio.css';
+import './styles/motion.css';
 import './styles/book.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

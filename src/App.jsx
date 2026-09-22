@@ -8,6 +8,7 @@ import Supporters from './components/Supporters';
 import Footer from './components/Footer';
 import Book from './components/Book';
 import AllProjects from './components/AllProjects';
+import { observeReveals } from './reveal';
 
 // Only two pages, so the path is checked directly instead of pulling in a router.
 const page = window.location.pathname.replace(/\/+$/, '') === '/projects' ? 'projects' : 'home';
@@ -31,6 +32,9 @@ export default function App() {
       document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
     }
   }, []);
+
+  // Scroll-in entrance animations (see styles/motion.css).
+  useEffect(() => observeReveals(), []);
 
   return (
     <>

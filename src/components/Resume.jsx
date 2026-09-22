@@ -1,18 +1,42 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { LuCode, LuPalette, LuCat, LuScissors, LuYoutube, LuGamepad2 } from 'react-icons/lu';
 import { useContent } from '../data/ContentContext.jsx';
+import { useInView, prefersReducedMotion } from '../reveal';
 
 const hobbyIcons = { Code: LuCode, Palette: LuPalette, Cat: LuCat, Scissors: LuScissors, Youtube: LuYoutube, Gamepad2: LuGamepad2 };
+
+// Counts up to `to` alongside the skill bar once it scrolls into view.
+function CountUp({ to }) {
+  const ref = useRef(null);
+  const seen = useInView(ref);
+  const [value, setValue] = useState(prefersReducedMotion() ? to : 0);
+
+  useEffect(() => {
+    if (!seen) return;
+    if (prefersReducedMotion()) { setValue(to); return; }
+    const start = performance.now();
+    let raf;
+    const tick = (t) => {
+      const p = Math.min(1, (t - start) / 1000);
+      setValue(Math.round(to * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [seen, to]);
+
+  return <span ref={ref}>{value}</span>;
+}
 
 export default function Resume() {
   const { education, experience, activities, skills, languages, hobbies } = useContent();
   return (
     <section className="resume" id="skills">
       <div className="resume__left">
-        <h2 className="resume__section-title">Education</h2>
-        <ul className="timeline">
+        <h2 className="resume__section-title reveal">Education</h2>
+        <ul className="timeline reveal">
           {education.map((item, i) => (
-            <li key={i} className="timeline__item">
+            <li key={i} className="timeline__item" style={{ '--i': i }}>
               <div className="timeline__years">{item.years}</div>
               <div className="timeline__org">{item.org}</div>
               <div className="timeline__desc">{item.degree}</div>
@@ -21,10 +45,10 @@ export default function Resume() {
         </ul>
 
         <div className="exp-box">
-          <h2 className="resume__section-title">Experience</h2>
-          <ul className="timeline">
+          <h2 className="resume__section-title reveal">Experience</h2>
+          <ul className="timeline reveal">
             {experience.map((item, i) => (
-              <li key={i} className="timeline__item">
+              <li key={i} className="timeline__item" style={{ '--i': i }}>
                 <div className="timeline__years">{item.year}</div>
                 <div className="timeline__org">{item.role}</div>
                 <div className="timeline__desc">
@@ -42,10 +66,10 @@ export default function Resume() {
         </div>
 
         <div className="activities">
-          <h2 className="resume__section-title">Activities</h2>
-          <ul className="timeline">
+          <h2 className="resume__section-title reveal">Activities</h2>
+          <ul className="timeline reveal">
             {activities.map((item, i) => (
-              <li key={i} className="timeline__item">
+              <li key={i} className="timeline__item" style={{ '--i': i }}>
                 <div className="timeline__years">{item.year}</div>
                 <div className="timeline__org">{item.event}</div>
                 <div className="timeline__desc">{item.role}</div>
@@ -61,7 +85,7 @@ export default function Resume() {
           SKILLS<br />SKILLS
         </div>
 
-        <h2 className="resume__section-title" style={{ position: 'relative', zIndex: 1 }}>
+        <h2 className="resume__section-title reveal" style={{ position: 'relative', zIndex: 1 }}>
           Skills
         </h2>
 
@@ -74,15 +98,15 @@ export default function Resume() {
           </div>
         </div>
 
-        <div className="skills-grid">
+        <div className="skills-grid reveal">
           <div>
             <div className="skills__label">Programming Languages</div>
             <div className="skill-bars">
               {skills.coding.map((c, i) => (
-                <div key={i} className="skill-bar-item">
+                <div key={i} className="skill-bar-item" style={{ '--i': i }}>
                   <div className="skill-bar-header">
                     <span className="skill-bar-name">{c.name}</span>
-                    <span className="skill-bar-meta">{c.level} · {c.percent}%</span>
+                    <span className="skill-bar-meta">{c.level} · <CountUp to={c.percent} />%</span>
                   </div>
                   <div className="skill-bar-track">
                     <div className="skill-bar-fill" style={{ width: `${c.percent}%` }} />
@@ -95,10 +119,10 @@ export default function Resume() {
             <div className="skills__label">Frameworks</div>
             <div className="skill-bars">
               {skills.frameworks.map((f, i) => (
-                <div key={i} className="skill-bar-item">
+                <div key={i} className="skill-bar-item" style={{ '--i': i }}>
                   <div className="skill-bar-header">
                     <span className="skill-bar-name">{f.name}</span>
-                    <span className="skill-bar-meta">{f.level} · {f.percent}%</span>
+                    <span className="skill-bar-meta">{f.level} · <CountUp to={f.percent} />%</span>
                   </div>
                   <div className="skill-bar-track">
                     <div className="skill-bar-fill" style={{ width: `${f.percent}%` }} />
@@ -115,11 +139,11 @@ export default function Resume() {
           ))}
         </div>
 
-        <div className="lang-section">
+        <div className="lang-section reveal">
           <h3 className="lang-section__title">Language</h3>
           <div className="lang-grid">
             {languages.map((l, i) => (
-              <div key={i}>
+              <div key={i} style={{ '--i': i }}>
                 <div className="lang-item__name">{l.name}</div>
                 <div className="lang-item__level">{l.level}</div>
               </div>
@@ -127,12 +151,12 @@ export default function Resume() {
           </div>
         </div>
 
-        <div className="hobbies-section">
+        <div className="hobbies-section reveal">
           <h3 className="hobbies__title">Hobbies &amp; Interests</h3>
           <div className="hobbies-grid">
             {hobbies.map((h, i) => (
               <div key={i} className="hobby-item">
-                <div className="hobby-icon">{React.createElement(hobbyIcons[h.icon], { size: 20, strokeWidth: 1.5 })}</div>
+                <div className="hobby-icon" style={{ '--i': i }}>{React.createElement(hobbyIcons[h.icon], { size: 20, strokeWidth: 1.5 })}</div>
                 <div className="hobby-label">{h.label}</div>
               </div>
             ))}

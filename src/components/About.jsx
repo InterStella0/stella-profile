@@ -8,20 +8,20 @@ const socialIcons = { github: SiGithub, discord: SiDiscord, kofi: SiKofi };
 export default function About() {
   const { personal } = useContent();
   return (
-    <section className="about" id="about">
+    <section className="about reveal" id="about">
       <div className="about__inner">
         {/* Left */}
         <div>
           <h2 className="about__heading">
-            Hello,<br />
-            I'm {personal.name}!
+            <span className="about__heading-line"><span>Hello,</span></span>
+            <span className="about__heading-line"><span>I'm {personal.name}!</span></span>
           </h2>
           <p className="about__bio">{personal.longBio}</p>
           <div className="about__social-links">
-            {personal.socialLinks.map(({ key, href, label }) => {
+            {personal.socialLinks.map(({ key, href, label }, i) => {
               const Icon = socialIcons[key];
               return (
-                <a key={key} href={href} className="about__link" target="_blank" rel="noopener noreferrer">
+                <a key={key} href={href} style={{ '--i': i }} className="about__link" target="_blank" rel="noopener noreferrer">
                   <Icon size={14} /> {label}
                 </a>
               );

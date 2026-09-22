@@ -9,7 +9,7 @@ export default function Work() {
   const highlights = allProjects.filter(p => p.highlight);
 
   return (
-    <section className="work" id="work">
+    <section className="work reveal" id="work">
       {/* Decorative sparkles */}
       <em className="work__sparkle work__sparkle--a">✦</em>
       <em className="work__sparkle work__sparkle--b">✦</em>
