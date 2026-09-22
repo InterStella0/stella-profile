@@ -56,6 +56,12 @@ class DecorationPage(str, enum.Enum):
     work = "work"
 
 
+class ProjectStatus(str, enum.Enum):
+    active = "active"
+    archived = "archived"
+    experiment = "experiment"
+
+
 class SupporterSource(str, enum.Enum):
     kofi = "kofi"
     manual = "manual"
@@ -197,6 +203,11 @@ class Project(Positioned, Base):
     link: Mapped[str | None] = mapped_column(String(500))
     secret: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     tags: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    status: Mapped[ProjectStatus] = mapped_column(
+        _enum(ProjectStatus), default=ProjectStatus.active, server_default=ProjectStatus.active.value
+    )
+    # Shown in the front page's "Highlight of my work" section; /projects lists everything.
+    highlight: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     # Filled in by app.github for projects linking to a GitHub repo.
     github_stars: Mapped[int | None] = mapped_column(Integer)
     github_stars_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

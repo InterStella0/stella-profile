@@ -45,6 +45,8 @@ def _project(p: Project) -> dict[str, Any]:
     if p.secret:
         out["secret"] = True
     out["tags"] = p.tags or []
+    out["status"] = p.status.value
+    out["highlight"] = p.highlight
     if p.github_stars is not None and not p.secret:
         out["stars"] = p.github_stars
     return out

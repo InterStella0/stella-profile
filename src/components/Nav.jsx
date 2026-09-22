@@ -1,9 +1,9 @@
 import React from 'react';
 
 function handleContactClick(e) {
-  e.preventDefault();
   const card = document.getElementById('contact');
-  if (!card) return;
+  if (!card) return; // on /projects: let the /#contact link load the front page
+  e.preventDefault();
 
   const rect = card.getBoundingClientRect();
   window.scrollTo({
@@ -22,21 +22,33 @@ function handleContactClick(e) {
   setTimeout(() => document.addEventListener('click', dismiss), 50);
 }
 
-export default function Nav({ scrolled }) {
+export default function Nav({ scrolled, page = 'home' }) {
+  // Section links point back at the front page when we're on /projects.
+  const home = page === 'home' ? '' : '/';
+
   return (
     <nav className={`nav${scrolled ? ' nav--scrolled' : ''}`}>
-      <a href="#" className="nav__logo">
+      <a href={home || '#'} className="nav__logo">
         <span className="nav__sparkle">✦</span>
         queeniemella
       </a>
 
       <ul className="nav__links">
-        <li><a href="#about">About me</a></li>
-        <li><a href="#skills">Skills</a></li>
-        <li><a href="#work">Work</a></li>
-        <li><a href="#supporters">Supporters</a></li>
+        <li><a href={`${home}#about`}>About me</a></li>
+        <li><a href={`${home}#skills`}>Skills</a></li>
+        <li><a href={`${home}#work`}>Work</a></li>
+        <li className="nav__item--page">
+          <a
+            href="/projects"
+            className={page === 'projects' ? 'nav__link--current' : undefined}
+            aria-current={page === 'projects' ? 'page' : undefined}
+          >
+            Projects
+          </a>
+        </li>
+        <li><a href={`${home}#supporters`}>Supporters</a></li>
         <li>
-          <a href="#contact" className="nav__cta" onClick={handleContactClick}>
+          <a href={`${home}#contact`} className="nav__cta" onClick={handleContactClick}>
             Get in touch!
           </a>
         </li>

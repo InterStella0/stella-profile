@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { LuLock, LuExternalLink, LuImages, LuStar } from 'react-icons/lu';
 import { useContent } from '../data/ContentContext.jsx';
 import Lightbox from './Lightbox';
+import WorkCard from './WorkCard';
 
 export default function Work() {
   const { allProjects } = useContent();
   const [gallery, setGallery] = useState(null);
+  const highlights = allProjects.filter(p => p.highlight);
 
   return (
     <section className="work" id="work">
@@ -18,66 +19,11 @@ export default function Work() {
 
       <h2 className="work__heading">Highlight of my work~</h2>
       <div className="work__grid">
-        {allProjects.map((p, i) => {
-          const images = p.images ?? (p.image ? [p.image] : []);
-          const hasGallery = images.length > 1;
+        {highlights.map((p, i) => <WorkCard key={i} project={p} onGallery={setGallery} />)}
+      </div>
 
-          return (
-            <div key={i} className={`work-card${p.secret ? ' work-card--secret' : ''}`}>
-              <div className="work-card__media">
-                <img className="work-card__thumb" src={images[0]} alt={p.title} />
-                {p.secret && (
-                  <span className="work-card__confidential">
-                    <LuLock size={12} strokeWidth={2} />
-                    Confidential
-                  </span>
-                )}
-              </div>
-              <div className="work-card__body">
-                <div className="work-card__title-row">
-                  <span className="work-card__title">{p.title}</span>
-                  {p.year && <span className="work-card__year">{p.year}</span>}
-                </div>
-                <div className="work-card__blurb">{p.blurb}</div>
-                {p.tags?.length > 0 && (
-                  <div className="work-card__tags">
-                    {p.tags.map((t, j) => <span key={j} className="work-card__tag">{t}</span>)}
-                  </div>
-                )}
-                {(( p.link && !p.secret) || hasGallery) && (
-                  <div className="work-card__actions">
-                    {p.link && !p.secret && (
-                      <a
-                        className="work-card__btn"
-                        href={p.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <LuExternalLink size={15} strokeWidth={1.8} />
-                        Visit
-                      </a>
-                    )}
-                    {p.stars != null && (
-                      <span className="work-card__stars" title={`${p.stars} GitHub stars`}>
-                        <LuStar size={14} strokeWidth={1.8} />
-                        {p.stars}
-                      </span>
-                    )}
-                    {hasGallery && (
-                      <button
-                        className="work-card__btn"
-                        onClick={() => setGallery({ images, title: p.title, index: 0 })}
-                      >
-                        <LuImages size={15} strokeWidth={1.8} />
-                        Gallery
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="work__more">
+        <a href="/projects" className="work__more-btn">see everything i've made ✦</a>
       </div>
 
       {gallery && (

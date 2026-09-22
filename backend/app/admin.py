@@ -6,13 +6,15 @@ from datetime import timezone
 
 from fastapi import FastAPI
 from markupsafe import Markup, escape
-from sqladmin import Admin, ModelView
+from sqladmin import Admin, ModelView, action
+from sqlalchemy import update
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
+from starlette.responses import RedirectResponse
 
 from app import github
 from app.config import ADMIN_PASSWORD, ADMIN_USERNAME, SECRET_KEY
-from app.db import engine
+from app.db import SessionLocal, engine
 from app.models import (
     Activity,
     Decoration,
@@ -120,11 +122,17 @@ class HobbyAdmin(OrderedView, model=Hobby):
 
 class ProjectAdmin(OrderedView, model=Project):
     icon = "fa-solid fa-diagram-project"
-    column_list = [Project.position, Project.title, Project.year, Project.secret, Project.tags, Project.github_stars]
+    column_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight, Project.secret,
+                   Project.tags, Project.github_stars]
     column_searchable_list = [Project.title]
+    column_sortable_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight]
     form_excluded_columns = [Project.github_stars, Project.github_stars_updated_at]
-    column_labels = {Project.github_stars: "GitHub stars"}
+    column_labels = {Project.github_stars: "GitHub stars", Project.highlight: "Set as highlight work",
+                     Project.position: "Order"}
     form_args = {
+        "highlight": {"description": "Show on the front page's \"Highlight of my work\" section "
+                                     "(every project is listed on /projects)"},
+        "position": {"description": "Order within the front page highlights; /projects sorts on its own"},
         "images": {"description": "Image paths or URLs, e.g. /projects/foo.png or an uploaded /uploads/... URL"},
         "secret": {"description": "Confidential: hidden from the featured list and no Visit link"},
         "link": {"description": "GitHub repo links (github.com/owner/repo) get a star count on the site"},
@@ -133,6 +141,21 @@ class ProjectAdmin(OrderedView, model=Project):
     async def after_model_change(self, data: dict, model: Project, is_created: bool, request: Request) -> None:
         # Pick up the star count for a new/changed link without waiting for the next cycle.
         await asyncio.to_thread(github.refresh_one, model.id)
+
+    def _set_highlight(self, request: Request, value: bool) -> RedirectResponse:
+        pks = [int(pk) for pk in request.query_params.get("pks", "").split(",") if pk]
+        if pks:
+            with SessionLocal() as session, session.begin():
+                session.execute(update(Project).where(Project.id.in_(pks)).values(highlight=value))
+        return RedirectResponse(request.url_for("admin:list", identity=self.identity), status_code=302)
+
+    @action(name="highlight", label="Set as highlight work")
+    async def highlight_action(self, request: Request) -> RedirectResponse:
+        return self._set_highlight(request, True)
+
+    @action(name="unhighlight", label="Remove from highlights")
+    async def unhighlight_action(self, request: Request) -> RedirectResponse:
+        return self._set_highlight(request, False)
 
 
 class DecorationAdmin(OrderedView, model=Decoration):
