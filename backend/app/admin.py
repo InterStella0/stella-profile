@@ -1,3 +1,4 @@
+import asyncio
 import hmac
 import logging
 import secrets
@@ -9,6 +10,7 @@ from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 
+from app import github
 from app.config import ADMIN_PASSWORD, ADMIN_USERNAME, SECRET_KEY
 from app.db import engine
 from app.models import (
@@ -118,12 +120,19 @@ class HobbyAdmin(OrderedView, model=Hobby):
 
 class ProjectAdmin(OrderedView, model=Project):
     icon = "fa-solid fa-diagram-project"
-    column_list = [Project.position, Project.title, Project.year, Project.secret, Project.tags]
+    column_list = [Project.position, Project.title, Project.year, Project.secret, Project.tags, Project.github_stars]
     column_searchable_list = [Project.title]
+    form_excluded_columns = [Project.github_stars, Project.github_stars_updated_at]
+    column_labels = {Project.github_stars: "GitHub stars"}
     form_args = {
         "images": {"description": "Image paths or URLs, e.g. /projects/foo.png or an uploaded /uploads/... URL"},
         "secret": {"description": "Confidential: hidden from the featured list and no Visit link"},
+        "link": {"description": "GitHub repo links (github.com/owner/repo) get a star count on the site"},
     }
+
+    async def after_model_change(self, data: dict, model: Project, is_created: bool, request: Request) -> None:
+        # Pick up the star count for a new/changed link without waiting for the next cycle.
+        await asyncio.to_thread(github.refresh_one, model.id)
 
 
 class DecorationAdmin(OrderedView, model=Decoration):

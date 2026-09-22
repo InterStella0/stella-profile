@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LuLock, LuExternalLink, LuImages } from 'react-icons/lu';
+import { LuLock, LuExternalLink, LuImages, LuStar } from 'react-icons/lu';
 import { useContent } from '../data/ContentContext.jsx';
 import Lightbox from './Lightbox';
 
@@ -56,6 +56,12 @@ export default function Work() {
                         <LuExternalLink size={15} strokeWidth={1.8} />
                         Visit
                       </a>
+                    )}
+                    {p.stars != null && (
+                      <span className="work-card__stars" title={`${p.stars} GitHub stars`}>
+                        <LuStar size={14} strokeWidth={1.8} />
+                        {p.stars}
+                      </span>
                     )}
                     {hasGallery && (
                       <button

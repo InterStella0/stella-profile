@@ -979,6 +979,16 @@ body:has(#contact.contact--active)::before {
   margin-top: 16px;
 }
 
+.work-card__stars {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #666;
+}
+
 .work-card__btn {
   display: inline-flex;
   align-items: center;

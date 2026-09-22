@@ -22,3 +22,7 @@ KOFI_CURRENCY = os.environ.get("KOFI_CURRENCY", "").upper()
 SUPPORTERS_CORS_ORIGINS = [
     o.strip() for o in os.environ.get("SUPPORTERS_CORS_ORIGINS", "*").split(",") if o.strip()
 ]
+
+# Optional: raises the GitHub API limit from 60 to 5000 requests/hour
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_STARS_REFRESH_MINUTES = max(1, int(os.environ.get("GITHUB_STARS_REFRESH_MINUTES", "60")))

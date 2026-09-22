@@ -1,11 +1,13 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app import api, kofi, supporters
+from app import api, github, kofi, supporters
 from app.admin import setup_admin
 from app.config import SUPPORTERS_CORS_ORIGINS, UPLOAD_DIR
 
@@ -27,8 +29,16 @@ class PathCORSMiddleware:
             await self.app(scope, receive, send)
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    task = asyncio.create_task(github.refresh_loop())
+    yield
+    task.cancel()
+
+
 app = FastAPI(
     title="stella-profile API",
+    lifespan=lifespan,
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
     redoc_url=None,

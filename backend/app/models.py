@@ -197,6 +197,9 @@ class Project(Positioned, Base):
     link: Mapped[str | None] = mapped_column(String(500))
     secret: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     tags: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    # Filled in by app.github for projects linking to a GitHub repo.
+    github_stars: Mapped[int | None] = mapped_column(Integer)
+    github_stars_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     def __str__(self) -> str:
         return self.title
