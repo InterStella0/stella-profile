@@ -135,7 +135,9 @@ class ProjectAdmin(OrderedView, model=Project):
         "position": {"description": "Order within the front page highlights; /projects sorts on its own"},
         "images": {"description": "Image paths or URLs, e.g. /projects/foo.png or an uploaded /uploads/... URL"},
         "secret": {"description": "Confidential: hidden from the featured list and no Visit link"},
-        "link": {"description": "GitHub repo links (github.com/owner/repo) get a star count on the site"},
+        "link": {"description": "The live site or demo (the Visit button)"},
+        "github": {"label": "GitHub",
+                   "description": "Repo link (github.com/owner/repo): its own button with the star count"},
     }
 
     async def after_model_change(self, data: dict, model: Project, is_created: bool, request: Request) -> None:

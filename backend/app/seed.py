@@ -90,7 +90,7 @@ def seed_content(session: Session, data: dict) -> None:
         Project(
             position=i, title=pr["title"], year=pr["year"],
             images=pr.get("images") or ([pr["image"]] if pr.get("image") else []),
-            blurb=pr["blurb"], link=pr.get("link"), secret=bool(pr.get("secret")), tags=pr.get("tags", []),
+            blurb=pr["blurb"], link=pr.get("link"), github=pr.get("github"), secret=bool(pr.get("secret")), tags=pr.get("tags", []),
             status=ProjectStatus(pr.get("status", "active")), highlight=pr.get("highlight", True),
         )
         for i, pr in enumerate(data["allProjects"])

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuLock, LuExternalLink, LuImages, LuStar } from 'react-icons/lu';
+import { LuLock, LuExternalLink, LuGithub, LuImages, LuStar } from 'react-icons/lu';
 
 export function projectImages(p) {
   return p.images ?? (p.image ? [p.image] : []);
@@ -9,6 +9,8 @@ export function projectImages(p) {
 export default function WorkCard({ project: p, onGallery, showStatus = false }) {
   const images = projectImages(p);
   const hasGallery = images.length > 1;
+  const hasLink = p.link && !p.secret;
+  const hasGithub = p.github && !p.secret;
   const status = p.status || 'active';
 
   return (
@@ -42,9 +44,9 @@ export default function WorkCard({ project: p, onGallery, showStatus = false }) 
             {p.tags.map((t, j) => <span key={j} className="work-card__tag">{t}</span>)}
           </div>
         )}
-        {((p.link && !p.secret) || hasGallery) && (
+        {(hasLink || hasGithub || hasGallery) && (
           <div className="work-card__actions">
-            {p.link && !p.secret && (
+            {hasLink && (
               <a
                 className="work-card__btn"
                 href={p.link}
@@ -55,11 +57,23 @@ export default function WorkCard({ project: p, onGallery, showStatus = false }) 
                 Visit
               </a>
             )}
-            {p.stars != null && (
-              <span className="work-card__stars" title={`${p.stars} GitHub stars`}>
-                <LuStar size={14} strokeWidth={1.8} />
-                {p.stars}
-              </span>
+            {hasGithub && (
+              <a
+                className="work-card__btn"
+                href={p.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={p.stars != null ? `${p.stars} GitHub stars` : undefined}
+              >
+                <LuGithub size={15} strokeWidth={1.8} />
+                GitHub
+                {p.stars != null && (
+                  <span className="work-card__stars">
+                    <LuStar size={13} strokeWidth={1.8} />
+                    {p.stars}
+                  </span>
+                )}
+              </a>
             )}
             {hasGallery && (
               <button

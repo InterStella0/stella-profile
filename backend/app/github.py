@@ -1,4 +1,4 @@
-"""Keep `Project.github_stars` up to date for projects linking to a GitHub repo.
+"""Keep `Project.github_stars` up to date for projects with a `github` repo link.
 
 A background loop (started in app.main) refreshes every project periodically;
 saving a project in the admin refreshes just that one. Counts are cached in the
@@ -53,7 +53,7 @@ def fetch_stars(repo: str) -> int | None:
 
 
 def refresh_project(project: Project) -> None:
-    repo = repo_from_link(project.link)
+    repo = repo_from_link(project.github)
     if repo is None:
         project.github_stars = None
         project.github_stars_updated_at = None
@@ -75,7 +75,7 @@ def refresh_all() -> None:
                 break
             except Exception:
                 # Keep the last known count; try again next cycle.
-                log.warning("Could not refresh stars for %s", project.link, exc_info=True)
+                log.warning("Could not refresh stars for %s", project.github, exc_info=True)
         session.commit()
     log.info("Refreshed GitHub stars for %d project(s)", updated)
 
@@ -88,7 +88,7 @@ def refresh_one(project_id: int) -> None:
         try:
             refresh_project(project)
         except Exception:
-            log.warning("Could not refresh stars for %s", project.link, exc_info=True)
+            log.warning("Could not refresh stars for %s", project.github, exc_info=True)
             return
         session.commit()
 

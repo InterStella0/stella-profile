@@ -42,6 +42,8 @@ def _project(p: Project) -> dict[str, Any]:
     out["blurb"] = p.blurb
     if p.link:
         out["link"] = p.link
+    if p.github and not p.secret:
+        out["github"] = p.github
     if p.secret:
         out["secret"] = True
     out["tags"] = p.tags or []
