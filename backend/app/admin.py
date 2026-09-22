@@ -145,26 +145,27 @@ class SupporterAdmin(ModelView, model=Supporter):
     column_list = [Supporter.name, Supporter.source, Supporter.type, Supporter.amount, Supporter.currency,
                    Supporter.is_public, Supporter.hidden, Supporter.created_at]
     column_searchable_list = [Supporter.name]
-    # Manual entries can set amount/time when created; after that (and for Ko-fi
-    # rows) only the display bits are editable.
+    # Amount/time are editable for manual entries; for Ko-fi payments they come
+    # from Ko-fi and any change to them is ignored.
     form_columns = [Supporter.name, Supporter.amount, Supporter.created_at, Supporter.message, Supporter.hidden]
-    form_create_rules = ["name", "amount", "created_at", "message", "hidden"]
-    form_edit_rules = ["name", "message", "hidden"]
     column_labels = {Supporter.amount: "Amount (USD)", Supporter.created_at: "Donated at (UTC)"}
     form_args = {
-        "amount": {"description": "Leave empty to only list the name (it then won't count in top/recent)"},
-        "created_at": {"description": "Pre-filled with the current time; change it for past donations"},
+        "amount": {"description": "Manual entries only (ignored for Ko-fi payments). "
+                                  "Leave empty to only list the name; it then won't count in top/recent"},
+        "created_at": {"description": "Manual entries only (ignored for Ko-fi payments)"},
         "hidden": {"description": "Hide from the site and the public supporter endpoints"},
     }
 
     async def on_model_change(self, data: dict, model: Supporter, is_created: bool, request: Request) -> None:
-        if not is_created:
+        if is_created:
+            model.source = SupporterSource.manual
+        if model.source == SupporterSource.kofi:
+            data.pop("amount", None)
+            data.pop("created_at", None)
             return
-        model.source = SupporterSource.manual
-        if data.get("amount") is not None:
-            model.currency = "USD"
+        model.currency = "USD" if data.get("amount") is not None else None
         if data.get("created_at") is None:
-            data.pop("created_at", None)  # fall back to the column default (now)
+            data.pop("created_at", None)  # keep the existing time (or the default, on create)
         elif data["created_at"].tzinfo is None:
             data["created_at"] = data["created_at"].replace(tzinfo=timezone.utc)
 
