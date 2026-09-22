@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useContent } from '../data/ContentContext.jsx';
 import Lightbox from './Lightbox';
 import WorkCard from './WorkCard';
@@ -7,7 +7,8 @@ import WorkCard from './WorkCard';
 // few dozen projects, so no server-side search/paging.
 
 const STATUSES = ['all', 'active', 'archived', 'experiment'];
-const PAGE = 9;
+// Cards load a few full rows at a time as you scroll, so the last row is never ragged.
+const ROWS = 3;
 const TOP_TAGS = 6;
 
 const SORTS = {
@@ -22,9 +23,12 @@ export default function AllProjects() {
   const [status, setStatus] = useState('all');
   const [tags, setTags] = useState([]);
   const [sort, setSort] = useState('new');
-  const [limit, setLimit] = useState(PAGE);
+  const [rows, setRows] = useState(ROWS);
+  const [cols, setCols] = useState(3);
   const [showAllTags, setShowAllTags] = useState(false);
   const [gallery, setGallery] = useState(null);
+  const gridRef = useRef(null);
+  const sentinelRef = useRef(null);
 
   useEffect(() => {
     const prev = document.title;
@@ -32,13 +36,24 @@ export default function AllProjects() {
     return () => { document.title = prev; };
   }, []);
 
+  // The grid is auto-fill, so read how many columns it actually laid out.
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return undefined;
+    const measure = () => setCols(getComputedStyle(grid).gridTemplateColumns.split(' ').length || 1);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(grid);
+    return () => ro.disconnect();
+  }, []);
+
   // Any filter change starts the list from the top again.
-  const filtered = (setter) => (value) => { setter(value); setLimit(PAGE); };
+  const filtered = (setter) => (value) => { setter(value); setRows(ROWS); };
   const toggleTag = (tag) => {
     setTags(ts => (ts.includes(tag) ? ts.filter(t => t !== tag) : [...ts, tag]));
-    setLimit(PAGE);
+    setRows(ROWS);
   };
-  const reset = () => { setQuery(''); setStatus('all'); setTags([]); setLimit(PAGE); };
+  const reset = () => { setQuery(''); setStatus('all'); setTags([]); setRows(ROWS); };
 
   // Tags ranked by how many projects use them; one-offs hide behind "+N more".
   const { ranked, primary } = useMemo(() => {
@@ -57,6 +72,22 @@ export default function AllProjects() {
       return [p.title, p.blurb, ...(p.tags || [])].join(' ').toLowerCase().includes(q);
     })
     .sort(SORTS[sort]);
+
+  const limit = rows * cols;
+  const hasMore = results.length > limit;
+
+  // Load more rows once the end of the grid scrolls near. Re-observing after each
+  // load re-checks the sentinel, in case it is still on screen.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return undefined;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setRows(r => r + ROWS); },
+      { rootMargin: '600px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, limit]);
 
   const visibleTags = showAllTags ? ranked : [...primary, ...tags.filter(t => !primary.includes(t))];
   const restCount = ranked.length - primary.length;
@@ -164,7 +195,7 @@ export default function AllProjects() {
           )}
         </div>
 
-        <div className="work__grid projects-list__grid">
+        <div className="work__grid projects-list__grid" ref={gridRef}>
           {results.slice(0, limit).map((p, i) => (
             <WorkCard key={`${p.title}-${i}`} project={p} onGallery={setGallery} showStatus />
           ))}
@@ -178,13 +209,7 @@ export default function AllProjects() {
           </div>
         )}
 
-        {results.length > limit && (
-          <div className="work__more">
-            <button className="work__more-btn" onClick={() => setLimit(l => l + PAGE)}>
-              show {Math.min(PAGE, results.length - limit)} more ✦
-            </button>
-          </div>
-        )}
+        {hasMore && <div ref={sentinelRef} aria-hidden="true" />}
       </main>
 
       {gallery && (

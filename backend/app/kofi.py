@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.config import KOFI_CURRENCY, KOFI_VERIFICATION_TOKEN
 from app.db import get_session
 from app.models import Supporter, SupporterSource
+from app.supporters import invalidate_cache
 
 log = logging.getLogger(__name__)
 
@@ -97,4 +98,6 @@ def kofi_webhook(data: str = Form(...), session: Session = Depends(get_session))
         "created_at": _parse_timestamp(payload.get("timestamp")),
     })
     session.commit()
+    if inserted:
+        invalidate_cache()
     return {"ok": True, "duplicate": not inserted}

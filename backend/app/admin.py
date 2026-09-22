@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from app import github
+from app.supporters import invalidate_cache
 from app.config import ADMIN_PASSWORD, ADMIN_USERNAME, SECRET_KEY
 from app.db import SessionLocal, engine
 from app.models import (
@@ -202,6 +203,12 @@ class SupporterAdmin(ModelView, model=Supporter):
             data.pop("created_at", None)  # keep the existing time (or the default, on create)
         elif data["created_at"].tzinfo is None:
             data["created_at"] = data["created_at"].replace(tzinfo=timezone.utc)
+
+    async def after_model_change(self, data: dict, model: Supporter, is_created: bool, request: Request) -> None:
+        invalidate_cache()
+
+    async def after_model_delete(self, model: Supporter, request: Request) -> None:
+        invalidate_cache()
 
 
 def _media_link(model: Media, _attr) -> Markup:
