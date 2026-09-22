@@ -1,6 +1,7 @@
 import hmac
 import logging
 import secrets
+from datetime import timezone
 
 from fastapi import FastAPI
 from markupsafe import Markup, escape
@@ -144,13 +145,28 @@ class SupporterAdmin(ModelView, model=Supporter):
     column_list = [Supporter.name, Supporter.source, Supporter.type, Supporter.amount, Supporter.currency,
                    Supporter.is_public, Supporter.hidden, Supporter.created_at]
     column_searchable_list = [Supporter.name]
-    # Ko-fi data is read-only here; only the display bits are editable.
-    form_columns = [Supporter.name, Supporter.message, Supporter.hidden]
-    form_args = {"hidden": {"description": "Hide from the site and the public supporter endpoints"}}
+    # Manual entries can set amount/time when created; after that (and for Ko-fi
+    # rows) only the display bits are editable.
+    form_columns = [Supporter.name, Supporter.amount, Supporter.created_at, Supporter.message, Supporter.hidden]
+    form_create_rules = ["name", "amount", "created_at", "message", "hidden"]
+    form_edit_rules = ["name", "message", "hidden"]
+    column_labels = {Supporter.amount: "Amount (USD)", Supporter.created_at: "Donated at (UTC)"}
+    form_args = {
+        "amount": {"description": "Leave empty to only list the name (it then won't count in top/recent)"},
+        "created_at": {"description": "Pre-filled with the current time; change it for past donations"},
+        "hidden": {"description": "Hide from the site and the public supporter endpoints"},
+    }
 
     async def on_model_change(self, data: dict, model: Supporter, is_created: bool, request: Request) -> None:
-        if is_created:
-            model.source = SupporterSource.manual
+        if not is_created:
+            return
+        model.source = SupporterSource.manual
+        if data.get("amount") is not None:
+            model.currency = "USD"
+        if data.get("created_at") is None:
+            data.pop("created_at", None)  # fall back to the column default (now)
+        elif data["created_at"].tzinfo is None:
+            data["created_at"] = data["created_at"].replace(tzinfo=timezone.utc)
 
 
 def _media_link(model: Media, _attr) -> Markup:

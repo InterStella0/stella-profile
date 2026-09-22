@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi_storages import FileSystemStorage
@@ -232,8 +232,9 @@ class Supporter(Base):
     message: Mapped[str | None] = mapped_column(Text)
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     hidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Python-side default (not func.now()) so the admin create form can use it.
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=func.now(), server_default=func.now(), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now(), index=True
     )
 
     def __str__(self) -> str:
