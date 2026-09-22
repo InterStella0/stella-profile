@@ -1,8 +1,9 @@
 import { forwardRef } from 'react';
 import Page from '../Page.jsx';
-import { profile, selfie } from '../../data/content.js';
+import { useContent } from '../../data/ContentContext.jsx';
 
 const AboutPage = forwardRef(function AboutPage({ pageNumber }, ref) {
+  const { profile, selfie } = useContent();
   const age = new Date().getFullYear() - profile.bornYear;
 
   return (

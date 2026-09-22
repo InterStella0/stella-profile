@@ -4,3 +4,4 @@ dist
 *.md
 test-results
 .env*
+backend

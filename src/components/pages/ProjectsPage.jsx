@@ -1,9 +1,10 @@
 import { forwardRef } from 'react';
 import Page from '../Page.jsx';
 import ProjectCard from '../ProjectCard.jsx';
-import { featuredProjects } from '../../data/content.js';
+import { useContent } from '../../data/ContentContext.jsx';
 
 const ProjectsPage = forwardRef(function ProjectsPage({ pageNumber }, ref) {
+  const { featuredProjects } = useContent();
   return (
     <Page ref={ref} pageId="projects" pageNumber={pageNumber}>
       <h2 className="heading">

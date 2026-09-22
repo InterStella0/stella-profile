@@ -1,10 +1,11 @@
 import React from 'react';
 import { SiGithub, SiDiscord, SiKofi } from 'react-icons/si';
-import { personal } from '../data/content';
+import { useContent } from '../data/ContentContext.jsx';
 
 const socialIcons = { github: SiGithub, discord: SiDiscord, kofi: SiKofi };
 
 export default function Hero() {
+  const { personal } = useContent();
   return (
     <section className="hero">
       <div className="hero__body">

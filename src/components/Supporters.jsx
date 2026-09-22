@@ -1,7 +1,8 @@
 import React from 'react';
-import { supporters } from '../data/content';
+import { useContent } from '../data/ContentContext.jsx';
 
 export default function Supporters() {
+  const { supporters } = useContent();
   return (
     <section className="supporters" id="supporters">
       {/* Decorative sparkles */}

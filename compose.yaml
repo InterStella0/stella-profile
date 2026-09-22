@@ -1,0 +1,49 @@
+services:
+  # FastAPI backend — content API, Ko-fi webhook, admin panel at /admin
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      KOFI_VERIFICATION_TOKEN: ${KOFI_VERIFICATION_TOKEN:-}
+      KOFI_CURRENCY: ${KOFI_CURRENCY:-}
+      SUPPORTERS_CORS_ORIGINS: ${SUPPORTERS_CORS_ORIGINS:-*}
+    volumes:
+      - uploads:/uploads
+    extra_hosts:
+      # lets DATABASE_URL use host.docker.internal for a Postgres on the Docker host (Linux)
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Production — builds the app and serves it via nginx on port 8083 (proxies /api, /admin, /uploads)
+  app:
+    build:
+      context: .
+      target: production
+    ports:
+      - "8083:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Development — hot-reload Vite dev server on port 5173
+  dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules        # keep container's node_modules isolated
+    ports:
+      - "5173:5173"
+    environment:
+      API_PROXY_TARGET: http://backend:8000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+    profiles:
+      - dev
+
+volumes:
+  uploads:

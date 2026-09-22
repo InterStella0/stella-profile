@@ -1,17 +1,11 @@
 import React from 'react';
 import { LuCode, LuPalette, LuCat, LuScissors, LuYoutube, LuGamepad2 } from 'react-icons/lu';
-import {
-  education,
-  experience,
-  activities,
-  skills,
-  languages,
-  hobbies,
-} from '../data/content';
+import { useContent } from '../data/ContentContext.jsx';
 
 const hobbyIcons = { Code: LuCode, Palette: LuPalette, Cat: LuCat, Scissors: LuScissors, Youtube: LuYoutube, Gamepad2: LuGamepad2 };
 
 export default function Resume() {
+  const { education, experience, activities, skills, languages, hobbies } = useContent();
   return (
     <section className="resume" id="skills">
       <div className="resume__left">

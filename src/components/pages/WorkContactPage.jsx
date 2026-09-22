@@ -2,9 +2,10 @@ import { forwardRef } from 'react';
 import Page from '../Page.jsx';
 import ProjectCard from '../ProjectCard.jsx';
 import ContactNote from '../ContactNote.jsx';
-import { allProjects, contacts } from '../../data/content.js';
+import { useContent } from '../../data/ContentContext.jsx';
 
 const WorkContactPage = forwardRef(function WorkContactPage({ pageNumber }, ref) {
+  const { allProjects, contacts } = useContent();
   return (
     <Page ref={ref} pageId="work" pageNumber={pageNumber}>
       <h2 className="heading">

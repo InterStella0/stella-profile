@@ -2,3 +2,8 @@
 dist
 node_modules
 test-results
+.env
+backend/.venv
+backend/uploads
+backend/*.csv
+__pycache__

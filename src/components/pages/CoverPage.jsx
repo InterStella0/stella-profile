@@ -1,8 +1,9 @@
 import { forwardRef } from 'react';
 import Page from '../Page.jsx';
-import { profile } from '../../data/content.js';
+import { useContent } from '../../data/ContentContext.jsx';
 
 const CoverPage = forwardRef(function CoverPage(props, ref) {
+  const { profile } = useContent();
   return (
     <Page ref={ref} pageId="cover" variant="cover">
       <div className="cover">

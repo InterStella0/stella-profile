@@ -1,11 +1,12 @@
 import React from 'react';
 import { LuMapPin, LuMail, LuPhone } from 'react-icons/lu';
 import { SiGithub, SiDiscord, SiKofi } from 'react-icons/si';
-import { personal } from '../data/content';
+import { useContent } from '../data/ContentContext.jsx';
 
 const socialIcons = { github: SiGithub, discord: SiDiscord, kofi: SiKofi };
 
 export default function About() {
+  const { personal } = useContent();
   return (
     <section className="about" id="about">
       <div className="about__inner">

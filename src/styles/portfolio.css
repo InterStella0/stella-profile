@@ -1192,6 +1192,38 @@ body:has(#contact.contact--active)::before {
 
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
 
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+
+.footer {
+  background: var(--black);
+  padding: 22px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cream);
+  font-size: 13px;
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.footer__link:hover {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .footer {
+    padding: 20px 28px;
+  }
+}
+
 @media (max-width: 960px) {
   .nav {
     padding: 18px 28px;

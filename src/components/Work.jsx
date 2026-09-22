@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { LuLock, LuExternalLink, LuImages } from 'react-icons/lu';
-import { allProjects } from '../data/content';
+import { useContent } from '../data/ContentContext.jsx';
 import Lightbox from './Lightbox';
 
 export default function Work() {
+  const { allProjects } = useContent();
   const [gallery, setGallery] = useState(null);
 
   return (
