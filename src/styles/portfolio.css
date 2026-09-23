@@ -1683,17 +1683,24 @@ body:has(#contact.contact--active)::before {
 
 .footer {
   background: var(--black);
-  padding: 22px 60px;
+  padding: 14px 60px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
 }
 
+.footer__links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
 .footer__link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
   color: var(--cream);
   font-size: 13px;
   text-decoration: none;
@@ -1705,9 +1712,44 @@ body:has(#contact.contact--active)::before {
   opacity: 1;
 }
 
+.footer__link:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.footer__link--source {
+  padding: 8px 12px;
+  border: 1px solid rgba(242, 234, 213, 0.28);
+  border-radius: 999px;
+  font-weight: 700;
+  opacity: 0.9;
+  transition: opacity 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.footer__link--source:hover {
+  border-color: var(--orange);
+  background: rgba(255, 204, 203, 0.08);
+}
+
 @media (max-width: 600px) {
   .footer {
-    padding: 20px 28px;
+    flex-direction: column;
+    padding: 14px 20px;
+    gap: 0;
+  }
+
+  .footer__links {
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .footer__link--source {
+    padding-inline: 10px;
+  }
+
+  .footer__link--login {
+    justify-content: center;
   }
 }
 
