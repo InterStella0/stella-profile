@@ -65,6 +65,23 @@
   .hero__sparkle--c { animation: qm-pop .6s cubic-bezier(.2, .9, .2, 1) 1.3s backwards, qm-twinkle 3.8s ease-in-out 2s infinite, qm-drift 9s ease-in-out infinite; }
   .hero__sparkle-layer { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
 
+  /* ── 1c · Background starfield: staggered pop-in, then each star twinkles on its own clock ── */
+  .hero__star {
+    animation:
+      qm-pop .6s cubic-bezier(.2, .9, .2, 1) calc(.9s + var(--delay) * .35s) backwards,
+      qm-twinkle var(--dur) ease-in-out calc(1.5s + var(--delay)) infinite;
+  }
+  .hero__star--glyph:nth-of-type(odd) { animation: qm-pop .6s cubic-bezier(.2, .9, .2, 1) calc(.9s + var(--delay) * .35s) backwards, qm-twinkle var(--dur) ease-in-out calc(1.5s + var(--delay)) infinite, qm-drift calc(var(--dur) * 2.2) ease-in-out infinite; }
+  .hero__star--glyph:nth-of-type(even) { animation: qm-pop .6s cubic-bezier(.2, .9, .2, 1) calc(.9s + var(--delay) * .35s) backwards, qm-twinkle var(--dur) ease-in-out calc(1.5s + var(--delay)) infinite, qm-drift-b calc(var(--dur) * 2.4) ease-in-out infinite; }
+
+  @keyframes qm-shoot {
+    0%       { opacity: 0; transform: rotate(-24deg) translateX(0); }
+    2%       { opacity: 1; }
+    9%, 100% { opacity: 0; transform: rotate(-24deg) translateX(-340px); }
+  }
+  .hero__shooting--a { animation: qm-shoot 9s ease-in 3s infinite; }
+  .hero__shooting--b { animation: qm-shoot 13s ease-in 7.5s infinite; }
+
   /* ── 1e · Nav sparkle spin + scroll cue ── */
   .nav__sparkle {
     display: inline-block;
