@@ -12,6 +12,13 @@
   padding-bottom: 2px;
 }
 
+/* Nunito's Q tail drops well below the tight line-height; give the mask
+   room for it and pull the following content back up. */
+.hero__title-mask {
+  padding-bottom: calc(var(--hero-title-size) * 0.2);
+  margin-bottom: calc(var(--hero-title-size) * -0.2);
+}
+
 .about__heading-line > span {
   display: block;
 }

@@ -193,10 +193,14 @@ body {
   min-width: 0;
 }
 
+.hero__title-mask {
+  --hero-title-size: clamp(32px, 9vw, 120px);
+}
+
 .hero__title {
   font-family: 'Nunito', sans-serif;
   font-weight: 900;
-  font-size: clamp(32px, 9vw, 120px);
+  font-size: var(--hero-title-size);
   color: var(--cream);
   line-height: 0.92;
   letter-spacing: -3px;
