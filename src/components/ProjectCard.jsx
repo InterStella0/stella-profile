@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 
+const DEFAULT_PROJECT_IMAGE = '/placeholder/github.svg';
+
 function ProjectCardImage({ src, alt, height }) {
   return (
     <img
@@ -65,7 +67,7 @@ export default function ProjectCard({
   mini = false,
 }) {
   const imgHeight = mini ? '64px' : '90px';
-  const allImages = images ?? (image ? [image] : []);
+  const allImages = images?.length ? images : [image || DEFAULT_PROJECT_IMAGE];
 
   return (
     <a
@@ -77,9 +79,9 @@ export default function ProjectCard({
     >
       {allImages.length > 1 ? (
         <Carousel images={allImages} title={title} height={imgHeight} />
-      ) : allImages.length === 1 ? (
+      ) : (
         <ProjectCardImage src={allImages[0]} alt={title} />
-      ) : null}
+      )}
       <div className="project-card__title">{title}</div>
       {!mini && blurb && <div className="project-card__blurb">{blurb}</div>}
     </a>

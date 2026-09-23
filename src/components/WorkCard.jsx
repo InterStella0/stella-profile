@@ -1,8 +1,11 @@
 import React from 'react';
 import { LuLock, LuExternalLink, LuGithub, LuImages, LuStar, LuZoomIn } from 'react-icons/lu';
 
+const DEFAULT_PROJECT_IMAGE = '/placeholder/github.svg';
+
 export function projectImages(p) {
-  return p.images ?? (p.image ? [p.image] : []);
+  if (p.images?.length) return p.images;
+  return [p.image || DEFAULT_PROJECT_IMAGE];
 }
 
 // One project card, shared by the front page highlights and /projects.
@@ -16,20 +19,14 @@ export default function WorkCard({ project: p, onGallery, showStatus = false }) 
   return (
     <div className={`work-card${p.secret ? ' work-card--secret' : ''}`}>
       <div className="work-card__media">
-        {images.length > 0 ? (
-          <button
-            className="work-card__thumb-btn"
-            onClick={() => onGallery({ images, title: p.title, index: 0 })}
-            aria-label={`View ${p.title} full size`}
-          >
-            <img className="work-card__thumb" src={images[0]} alt={p.title} loading="lazy" />
-            <span className="work-card__zoom"><LuZoomIn size={18} strokeWidth={1.8} /></span>
-          </button>
-        ) : (
-          <div className="work-card__placeholder">
-            <span>{p.secret ? 'redacted' : 'no preview'}</span>
-          </div>
-        )}
+        <button
+          className="work-card__thumb-btn"
+          onClick={() => onGallery({ images, title: p.title, index: 0 })}
+          aria-label={`View ${p.title} full size`}
+        >
+          <img className="work-card__thumb" src={images[0]} alt={p.title} loading="lazy" />
+          <span className="work-card__zoom"><LuZoomIn size={18} strokeWidth={1.8} /></span>
+        </button>
         {p.secret && (
           <span className="work-card__confidential">
             <LuLock size={12} strokeWidth={2} />
