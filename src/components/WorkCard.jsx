@@ -12,6 +12,7 @@ export function projectImages(p) {
 export default function WorkCard({ project: p, onGallery, showStatus = false }) {
   const images = projectImages(p);
   const hasGallery = images.length > 1;
+  const hasThumbnailImage = images[0] !== DEFAULT_PROJECT_IMAGE;
   const hasLink = p.link && !p.secret;
   const hasGithub = p.github && !p.secret;
   const status = p.status || 'active';
@@ -19,14 +20,18 @@ export default function WorkCard({ project: p, onGallery, showStatus = false }) 
   return (
     <div className={`work-card${p.secret ? ' work-card--secret' : ''}`}>
       <div className="work-card__media">
-        <button
-          className="work-card__thumb-btn"
-          onClick={() => onGallery({ images, title: p.title, index: 0 })}
-          aria-label={`View ${p.title} full size`}
-        >
+        {hasThumbnailImage ? (
+          <button
+            className="work-card__thumb-btn"
+            onClick={() => onGallery({ images, title: p.title, index: 0 })}
+            aria-label={`View ${p.title} full size`}
+          >
+            <img className="work-card__thumb" src={images[0]} alt={p.title} loading="lazy" />
+            <span className="work-card__zoom"><LuZoomIn size={18} strokeWidth={1.8} /></span>
+          </button>
+        ) : (
           <img className="work-card__thumb" src={images[0]} alt={p.title} loading="lazy" />
-          <span className="work-card__zoom"><LuZoomIn size={18} strokeWidth={1.8} /></span>
-        </button>
+        )}
         {p.secret && (
           <span className="work-card__confidential">
             <LuLock size={12} strokeWidth={2} />
