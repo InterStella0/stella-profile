@@ -7,13 +7,16 @@ kept until the next cycle.
 - GitHub: GraphQL contributions (needs GITHUB_TOKEN). Counts commits GitHub
   credits to the profile, i.e. on default branches; private repos only show up
   if the token belongs to GITHUB_USERNAME.
-- GitLab: push events, summing each push's commit count. gitlab.com keeps
-  events for 3 years, so older GitLab commits drop out of the all-time total.
+- GitLab: push events, counting only the pushed commits the user authored
+  (a push that syncs a fork with upstream carries everyone else's commits too).
+  gitlab.com keeps events for 3 years, so older GitLab commits drop out of the
+  all-time total.
 """
 
 import asyncio
 import json
 import logging
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter
@@ -41,6 +44,8 @@ WEEKS = 53
 # Latest per-source results: {"daily": Counter[date, int], "total": int}
 _sources: dict[str, dict[str, Any]] = {}
 _updated_at: datetime | None = None
+# GitLab push event id -> commits in it authored by the user (events never change).
+_gitlab_pushes: dict[int, int] = {}
 
 
 def _window(today: date) -> tuple[date, date]:
@@ -122,9 +127,46 @@ def _github_stars(login: str) -> int:
 
 # ── GitLab ───────────────────────────────────────────────────────────────────
 
+def _gitlab_identity(user: str, headers: dict[str, str]) -> tuple[set[str], set[str]]:
+    """Names and emails that mark a commit as the user's own."""
+    me = _get_json(f"{GITLAB_URL}/api/v4/users?username={user}", headers)[0]
+    host = urllib.parse.urlparse(GITLAB_URL).hostname
+    names = {me["name"], me["username"]}
+    emails = {f"{me['id']}-{me['username']}@users.noreply.{host}", me.get("public_email") or ""}
+    if GITLAB_TOKEN:
+        own = _get_json(f"{GITLAB_URL}/api/v4/user", headers)
+        if own["id"] == me["id"]:
+            emails |= {own.get("email") or "", own.get("commit_email") or ""}
+            emails |= {e["email"] for e in _get_json(f"{GITLAB_URL}/api/v4/user/emails", headers)}
+    return {n.casefold() for n in names}, {e.casefold() for e in emails if e}
+
+
+def _gitlab_own_commits(event: dict[str, Any], identity: tuple[set[str], set[str]], headers: dict[str, str]) -> int:
+    push = event.get("push_data") or {}
+    count = push.get("commit_count") or 0
+    if not count or not push.get("commit_to"):
+        return 0
+    repo = f"{GITLAB_URL}/api/v4/projects/{event['project_id']}/repository"
+    try:
+        if push.get("commit_from"):
+            commits = _get_json(f"{repo}/compare?from={push['commit_from']}&to={push['commit_to']}", headers)["commits"]
+        else:  # new branch: the newest commit_count commits on it
+            commits = _get_json(f"{repo}/commits?ref_name={push['commit_to']}&per_page={min(count, 100)}", headers)
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            raise
+        return 0  # project or commits no longer visible, so they can't be attributed
+    names, emails = identity
+    return sum(
+        1 for c in commits
+        if (c.get("author_email") or "").casefold() in emails or (c.get("author_name") or "").casefold() in names
+    )
+
+
 def fetch_gitlab(start: date, end: date) -> dict[str, Any]:
     user = urllib.parse.quote(GITLAB_USERNAME, safe="")
     headers = {"PRIVATE-TOKEN": GITLAB_TOKEN} if GITLAB_TOKEN else {}
+    identity = _gitlab_identity(user, headers)
     daily: Counter[date] = Counter()
     total, page = 0, 1
     while True:
@@ -133,7 +175,9 @@ def fetch_gitlab(start: date, end: date) -> dict[str, Any]:
             headers,
         )
         for e in events:
-            n = (e.get("push_data") or {}).get("commit_count") or 0
+            if e["id"] not in _gitlab_pushes:
+                _gitlab_pushes[e["id"]] = _gitlab_own_commits(e, identity, headers)
+            n = _gitlab_pushes[e["id"]]
             total += n
             day = date.fromisoformat(e["created_at"][:10])
             if start <= day <= end:
