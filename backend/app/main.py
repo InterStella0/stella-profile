@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app import api, github, kofi, supporters
+from app import api, commits, github, kofi, supporters
 from app.admin import setup_admin
 from app.config import SUPPORTERS_CORS_ORIGINS, UPLOAD_DIR
 
@@ -31,9 +31,10 @@ class PathCORSMiddleware:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    task = asyncio.create_task(github.refresh_loop())
+    tasks = [asyncio.create_task(github.refresh_loop()), asyncio.create_task(commits.refresh_loop())]
     yield
-    task.cancel()
+    for task in tasks:
+        task.cancel()
 
 
 app = FastAPI(
@@ -52,6 +53,7 @@ app.add_middleware(
 )
 
 app.include_router(api.router)
+app.include_router(commits.router)
 app.include_router(supporters.router)
 app.include_router(kofi.router)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")

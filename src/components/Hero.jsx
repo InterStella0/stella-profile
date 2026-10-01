@@ -1,12 +1,15 @@
 import React, { useRef } from 'react';
 import { SiGithub, SiDiscord, SiKofi } from 'react-icons/si';
 import { useContent } from '../data/ContentContext.jsx';
+import { useCommits } from '../data/useCommits';
 import { prefersReducedMotion } from '../reveal';
+import HeroCommits from './HeroCommits';
 
 const socialIcons = { github: SiGithub, discord: SiDiscord, kofi: SiKofi };
 
-// Background starfield: [left, top, size(px), kind, parallax depth, twinkle secs, delay secs].
-// Positions are % of the banner so they spread with the viewport; `wide` ones hide on phones.
+// Background starfield: [left, top, size(px), kind, parallax depth, twinkle secs, delay secs, extra classes].
+// Positions are % of the banner so they spread with the viewport; `wide` ones hide on phones,
+// `clear-commits` ones hide when the commit stats are shown.
 const STARS = [
   ['4%', '8%', 17, 'glyph', 14, 3.4, 0.2],
   ['17%', '5%', 4, 'dot', 6, 2.8, 1.1],
@@ -16,7 +19,7 @@ const STARS = [
   ['47%', '34%', 26, 'glyph', 22, 4.6, 0.3, 'wide'],
   ['34%', '48%', 3, 'dot', 6, 2.6, 2.1, 'wide'],
   ['41%', '62%', 14, 'glyph cream', 14, 3.8, 1.3, 'wide'],
-  ['6%', '66%', 22, 'glyph gold', 22, 4.4, 0.7],
+  ['6%', '66%', 22, 'glyph gold', 22, 4.4, 0.7, 'clear-commits'],
   ['15%', '78%', 3, 'dot', 6, 3.2, 1.8],
   ['3%', '90%', 4, 'dot', 6, 2.9, 0.4],
   ['24%', '88%', 17, 'glyph', 14, 3.6, 2.4],
@@ -36,6 +39,7 @@ const starLayers = [22, 14, 6].map(depth => STARS.filter(s => s[4] === depth));
 
 export default function Hero() {
   const { personal } = useContent();
+  const commits = useCommits();
   const bodyRef = useRef(null);
 
   // Sparkle layers drift against the cursor; mouse only, and off for reduced motion.
@@ -55,14 +59,14 @@ export default function Hero() {
 
   return (
     <section className="hero">
-      <div className="hero__body" ref={bodyRef} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
+      <div className={`hero__body${commits ? ' hero__body--commits' : ''}`} ref={bodyRef} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
         {/* Twinkling starfield behind everything, sharing the sparkle parallax */}
         {starLayers.map(stars => (
           <div key={stars[0][4]} className="hero__sparkle-layer" data-depth={stars[0][4]} aria-hidden="true">
-            {stars.map(([left, top, size, kind, , dur, delay, wide], i) => (
+            {stars.map(([left, top, size, kind, , dur, delay, extra], i) => (
               <em
                 key={i}
-                className={`hero__star ${kind.split(' ').map(k => `hero__star--${k}`).join(' ')}${wide ? ' hero__star--wide' : ''}`}
+                className={`hero__star ${kind.split(' ').map(k => `hero__star--${k}`).join(' ')}${extra ? ` hero__star--${extra}` : ''}`}
                 style={{ left, top, '--size': `${size}px`, '--dur': `${dur}s`, '--delay': `${delay}s` }}
               >
                 {kind.startsWith('glyph') ? '✦' : null}
@@ -106,6 +110,9 @@ export default function Hero() {
             })}
           </div>
         </div>
+
+        {/* Weekly commits as a glowing line along the bottom of the starfield */}
+        {commits && <HeroCommits commits={commits} />}
 
         {/* Decorative sparkles, each on a parallax layer */}
         <div className="hero__sparkle-layer" data-depth="34"><em className="hero__sparkle hero__sparkle--a">✦</em></div>
