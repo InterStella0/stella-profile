@@ -23,6 +23,7 @@ CACHE_CONTROL = "public, max-age=60"
 # (e.g. the kofi_import CLI). Assumes a single uvicorn worker, as in the Dockerfile.
 CACHE_TTL_SECONDS = 3600
 MAX_LIMIT = 50
+ANONYMOUS_NAME = "Someone"
 
 visible = (Supporter.is_public.is_(True), Supporter.hidden.is_(False))
 # Ko-fi payments, plus manual entries that were given an amount.
@@ -118,12 +119,16 @@ def _compute_recent() -> list[RecentDonation]:
     with SessionLocal() as session:
         rows = session.scalars(
             select(Supporter)
-            .where(*visible, donations)
+            .where(Supporter.hidden.is_(False), donations)
             .order_by(Supporter.created_at.desc(), Supporter.id.desc())
             .limit(MAX_LIMIT)
         ).all()
+    # Private donations still show up so sites can say "someone donated", but
+    # without the donor's name or message.
     return [
         RecentDonation(name=s.name.strip(), message=(s.message or "").strip() or None, created_at=s.created_at)
+        if s.is_public
+        else RecentDonation(name=ANONYMOUS_NAME, message=None, created_at=s.created_at)
         for s in rows
     ]
 
