@@ -160,12 +160,13 @@ body {
   margin-top: 10px;
 }
 
+/* Same size as the photo, peeking out 18px up and left, so it reads as a card behind it */
 .hero__photo-bg {
   position: absolute;
   top: 0;
   left: 0;
-  width: 252px;
-  height: 320px;
+  width: 234px;
+  height: 302px;
   background: var(--orange);
   border-radius: 16px;
 }

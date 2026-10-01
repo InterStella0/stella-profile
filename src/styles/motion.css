@@ -146,8 +146,13 @@
   .commit-graph__cells .commit-graph__cell { animation: qm-fade .35s ease-out calc(.2s + var(--col, 0) * 12ms) backwards; }
 
   /* ── Hero commit line: draws left to right once the data arrives ── */
-  @keyframes qm-line-draw { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
-  .hero-commits__line { stroke-dasharray: 1; animation: qm-line-draw 1.6s cubic-bezier(.4, 0, .2, 1) .2s backwards; }
+  /* A clip, not a dash: non-scaling-stroke measures dashes in screen px, so pathLength can't be trusted.
+     Negative insets keep the caps and glow; `backwards` drops the clip once it's drawn. */
+  @keyframes qm-line-draw {
+    from { clip-path: inset(-16px 100% -16px -16px) }
+    to   { clip-path: inset(-16px -16px -16px -16px) }
+  }
+  .hero-commits__line { animation: qm-line-draw 1.6s cubic-bezier(.4, 0, .2, 1) .2s backwards; }
   .hero-commits__area { animation: qm-fade 1s ease-out .9s backwards; }
   .hero-commits__stats { animation: qm-rise .6s cubic-bezier(.2, .8, .2, 1) .3s backwards; }
   .hero-commits__peak { animation: qm-pop .6s cubic-bezier(.2, .9, .2, 1) 1.6s backwards, qm-twinkle 3.4s ease-in-out 2.2s infinite; }

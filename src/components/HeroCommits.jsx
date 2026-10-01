@@ -72,7 +72,7 @@ export default function HeroCommits({ commits }) {
             </linearGradient>
           </defs>
           <path className="hero-commits__area" d={area} fill="url(#hero-commits-fill)" />
-          <path className="hero-commits__line" d={line} vectorEffect="non-scaling-stroke" pathLength="1" />
+          <path className="hero-commits__line" d={line} vectorEffect="non-scaling-stroke" />
         </svg>
         <em className="hero-commits__peak" style={at(peak)} aria-hidden="true">✦</em>
         {hover != null && (
