@@ -32,3 +32,7 @@ docker compose exec backend python -m app.seed
 ```
 
 Ko-fi webhook URL: `https://<your-domain>/api/kofi/webhook`
+
+## Credits
+
+Based on a design by [Han Nguyen](https://www.behance.net/hannnb).

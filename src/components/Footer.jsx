@@ -4,6 +4,7 @@ import { SiGithub } from 'react-icons/si';
 
 const REPOSITORY_URL = 'https://github.com/InterStella0/stella-profile';
 const LICENSE_URL = 'https://github.com/InterStella0/stella-profile/blob/main/LICENSE';
+const DESIGNER_URL = 'https://www.behance.net/hannnb';
 
 export default function Footer() {
   return (
@@ -21,6 +22,9 @@ export default function Footer() {
         </a>
         <a href={LICENSE_URL} className="footer__link" target="_blank" rel="noopener noreferrer">
           MIT License
+        </a>
+        <a href={DESIGNER_URL} className="footer__link" target="_blank" rel="noopener noreferrer">
+          Based on a design by Han Nguyen
         </a>
       </div>
       <a href="/admin/" className="footer__link footer__link--login">
