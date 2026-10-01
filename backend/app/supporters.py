@@ -140,13 +140,24 @@ def recent_donations(response: Response, limit: Limit = 10):
     return _cached("recent", _compute_recent)[:limit]
 
 
-def _compute_all() -> list[str]:
+class AllSupporters(BaseModel):
+    names: list[str] = Field(description="Public supporters, each once, in order of first support")
+    anonymous: int = Field(description="Distinct private supporters not already listed in names")
+
+
+def _compute_all() -> list[AllSupporters]:
     with SessionLocal() as session:
-        return distinct_visible_names(session)
+        names = distinct_visible_names(session)
+        listed = {n.lower() for n in names}
+        private = session.scalars(
+            select(Supporter.name).where(Supporter.is_public.is_(False), Supporter.hidden.is_(False))
+        )
+        anonymous = {n.strip().lower() for n in private} - listed
+    return [AllSupporters(names=names, anonymous=len(anonymous))]
 
 
-@router.get("/all", response_model=list[str])
+@router.get("/all", response_model=AllSupporters)
 def all_supporters(response: Response):
-    """Every public supporter once (case-insensitive), in order of first support."""
+    """Every public supporter once, plus how many private ones there are (names withheld)."""
     response.headers["Cache-Control"] = CACHE_CONTROL
-    return _cached("all", _compute_all)
+    return _cached("all", _compute_all)[0]
