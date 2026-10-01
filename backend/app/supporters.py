@@ -138,3 +138,15 @@ def recent_donations(response: Response, limit: Limit = 10):
     """Most recent donations, newest first."""
     response.headers["Cache-Control"] = CACHE_CONTROL
     return _cached("recent", _compute_recent)[:limit]
+
+
+def _compute_all() -> list[str]:
+    with SessionLocal() as session:
+        return distinct_visible_names(session)
+
+
+@router.get("/all", response_model=list[str])
+def all_supporters(response: Response):
+    """Every public supporter once (case-insensitive), in order of first support."""
+    response.headers["Cache-Control"] = CACHE_CONTROL
+    return _cached("all", _compute_all)
