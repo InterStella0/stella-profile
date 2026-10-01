@@ -8,7 +8,7 @@ const bobTiming = (i) => ({
 });
 
 export default function Supporters() {
-  const { supporters } = useContent();
+  const { supporters, anonymousSupporters = 0 } = useContent();
   return (
     <section className="supporters reveal" id="supporters">
       {/* Decorative sparkles */}
@@ -23,6 +23,11 @@ export default function Supporters() {
             {name}
           </span>
         ))}
+        {anonymousSupporters > 0 && (
+          <span className="supporters__pill supporters__pill--anonymous" style={bobTiming(supporters.length)}>
+            + {anonymousSupporters} anonymous
+          </span>
+        )}
       </div>
     </section>
   );

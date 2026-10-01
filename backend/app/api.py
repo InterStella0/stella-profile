@@ -23,7 +23,7 @@ from app.models import (
     SkillTagCategory,
     SocialLink,
 )
-from app.supporters import distinct_visible_names
+from app.supporters import anonymous_supporter_count, distinct_visible_names
 
 router = APIRouter(prefix="/api", tags=["content"])
 
@@ -86,6 +86,7 @@ def content(session: Session = Depends(get_session)) -> dict[str, Any]:
             {"src": d.src, "x": d.x, "y": d.y, "rotate": d.rotate, "scale": d.scale}
         )
 
+    supporters = distinct_visible_names(session)
     return {
         "personal": {
             "name": personal.name,
@@ -116,6 +117,7 @@ def content(session: Session = Depends(get_session)) -> dict[str, Any]:
         "languages": [{"name": l.name, "level": l.level} for l in _ordered(session, Language)],
         "hobbies": [{"icon": h.icon.value, "label": h.label} for h in _ordered(session, Hobby)],
         "allProjects": [_project(p) for p in _ordered(session, Project)],
-        "supporters": distinct_visible_names(session),
+        "supporters": supporters,
+        "anonymousSupporters": anonymous_supporter_count(session, supporters),
         "decorations": decorations,
     }

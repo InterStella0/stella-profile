@@ -87,6 +87,13 @@ def distinct_visible_names(session: Session) -> list[str]:
     return list(seen.values())
 
 
+def anonymous_supporter_count(session: Session, listed_names: list[str]) -> int:
+    """Distinct private/hidden supporters whose name isn't already in `listed_names`."""
+    listed = {n.lower() for n in listed_names}
+    unnamed = {n.strip().lower() for n in session.scalars(select(Supporter.name).where(anonymous))}
+    return len(unnamed - listed)
+
+
 def _compute_top() -> list[TopSupporter]:
     first_name = array_agg(aggregate_order_by(Supporter.name, Supporter.created_at, Supporter.id))[1]
     latest_message = type_coerce(
@@ -150,9 +157,7 @@ class AllSupporters(BaseModel):
 def _compute_all() -> list[AllSupporters]:
     with SessionLocal() as session:
         names = distinct_visible_names(session)
-        listed = {n.lower() for n in names}
-        unnamed = {n.strip().lower() for n in session.scalars(select(Supporter.name).where(anonymous))}
-    return [AllSupporters(names=names, anonymous=len(unnamed - listed))]
+        return [AllSupporters(names=names, anonymous=anonymous_supporter_count(session, names))]
 
 
 @router.get("/all", response_model=AllSupporters)

@@ -1658,6 +1658,7 @@ body:has(#contact.contact--active)::before {
 .supporters__pill--0 { background: var(--cream); }
 .supporters__pill--1 { background: var(--orange); }
 .supporters__pill--2 { background: var(--gold); }
+.supporters__pill--anonymous { background: var(--paper); border: 2px dashed var(--orange); font-style: italic; }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
 
