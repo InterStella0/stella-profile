@@ -138,26 +138,33 @@ body {
 .hero {
   background: var(--green);
   min-height: 100vh;
+  min-height: 100svh;
+  /* 1px on tall screens, less on short ones: the landing view scales by this so the
+     black strip always lands on the bottom edge (779px of it scales; ~255px, incl. the nav-clearing padding floor, doesn't) */
+  --u: clamp(0.45px, (100svh - 255px) / 779, 1px);
+  /* The photo isn't what sets the height (the title column is), so it shrinks more gently */
+  --pu: calc(0.3px + 0.7 * var(--u));
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
 }
 
+/* Clips the starfield here, not on .hero, so the scroll button can hang over the next section */
 .hero__body {
   flex: 1;
   display: flex;
   align-items: flex-start;
-  padding: 130px 60px 60px;
+  padding: max(88px, 130 * var(--u)) 60px 60px;
   position: relative;
+  overflow: hidden;
 }
 
 /* Photo */
 .hero__photo-col {
   position: relative;
-  width: 290px;
+  width: calc(290 * var(--pu));
   flex-shrink: 0;
-  margin-top: 10px;
+  margin-top: calc(10 * var(--pu));
 }
 
 /* Same size as the photo, peeking out 18px up and left, so it reads as a card behind it */
@@ -165,8 +172,8 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 234px;
-  height: 302px;
+  width: calc(234 * var(--pu));
+  height: calc(302 * var(--pu));
   background: var(--orange);
   border-radius: 16px;
 }
@@ -174,12 +181,12 @@ body {
 .hero__photo {
   position: relative;
   display: block;
-  width: 234px;
-  height: 302px;
+  width: calc(234 * var(--pu));
+  height: calc(302 * var(--pu));
   object-fit: cover;
   border-radius: 16px;
-  margin-top: 18px;
-  margin-left: 18px;
+  margin-top: calc(18 * var(--pu));
+  margin-left: calc(18 * var(--pu));
   filter: contrast(1.05) saturate(0.8);
 }
 
@@ -195,7 +202,7 @@ body {
 }
 
 .hero__title-mask {
-  --hero-title-size: clamp(32px, 9vw, 120px);
+  --hero-title-size: clamp(32px, min(9vw, 120 * var(--u)), 120px);
 }
 
 .hero__title {
@@ -226,13 +233,13 @@ body {
 }
 
 .hero__outline-line--1 {
-  font-size: clamp(24px, 6.8vw, 90px);
+  font-size: clamp(24px, min(6.8vw, 90 * var(--u)), 90px);
 }
 .hero__outline-line--2 {
-  font-size: clamp(30px, 8.2vw, 108px);
+  font-size: clamp(30px, min(8.2vw, 108 * var(--u)), 108px);
 }
 .hero__outline-line--3 {
-  font-size: clamp(36px, 9.8vw, 130px);
+  font-size: clamp(36px, min(9.8vw, 130 * var(--u)), 130px);
 }
 
 .hero__social {
@@ -339,7 +346,7 @@ body {
 
 /* Commit line along the bottom of the starfield (HeroCommits.jsx) */
 .hero__body--commits {
-  --commits-graph-h: 260px;
+  --commits-graph-h: calc(260 * var(--u));
   /* Graph starts just below the socials; the stats sit beside the text column, under the photo */
   padding-bottom: calc(var(--commits-graph-h) + 10px);
 }
@@ -2002,15 +2009,22 @@ body:has(#contact.contact--active)::before {
     font-size: 16px;
   }
 
+  /* Stacked layout: same idea as desktop, with its own split (674px scales; ~498px plus
+     the ~22vw outline names doesn't) */
+  .hero {
+    --u: clamp(0.2px, (100svh - 498px - 22vw) / 674, 1px);
+    --pu: var(--u);
+  }
+
   .hero__body {
-    padding: 110px 28px 50px;
+    padding: max(84px, 110 * var(--u)) 28px 50px;
     flex-direction: column;
     align-items: center;
-    gap: 32px;
+    gap: calc(32 * var(--u));
   }
 
   .hero__photo-col {
-    width: 220px;
+    width: calc(252 * var(--pu));
   }
 
   .hero__text-col {
@@ -2031,12 +2045,13 @@ body:has(#contact.contact--active)::before {
     align-items: center;
   }
 
+  /* Bottom room for the top half of the scroll button, so it doesn't cover the bio */
   .hero__footer {
-    padding: 24px 28px;
+    padding: 24px 28px 64px;
   }
 
   .hero__body--commits {
-    --commits-graph-h: 170px;
+    --commits-graph-h: calc(170 * var(--u));
     padding-bottom: calc(var(--commits-graph-h) + 10px);
   }
 
@@ -2044,11 +2059,11 @@ body:has(#contact.contact--active)::before {
   .hero-commits__stats {
     position: static;
     align-self: stretch;
-    column-gap: 40px;
+    gap: 8px 40px;
   }
 
   .hero-commits__total {
-    font-size: 36px;
+    font-size: 32px;
   }
 
   .about {
@@ -2107,6 +2122,10 @@ body:has(#contact.contact--active)::before {
 }
 
 @media (max-width: 600px) {
+  /* Phones: drop the outline names so the hero is shorter, and stop budgeting for them */
+  .hero__outline-stack { display: none; }
+  .hero { --u: clamp(0.2px, (100svh - 498px) / 674, 1px); }
+
   .work__grid {
     grid-template-columns: 1fr;
   }
