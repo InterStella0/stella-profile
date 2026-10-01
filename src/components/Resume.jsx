@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LuCode, LuPalette, LuCat, LuScissors, LuYoutube, LuGamepad2 } from 'react-icons/lu';
 import { useContent } from '../data/ContentContext.jsx';
+import { useCommits } from '../data/useCommits';
+import CommitActivity from './CommitActivity';
 import { useInView, prefersReducedMotion } from '../reveal';
 
 const hobbyIcons = { Code: LuCode, Palette: LuPalette, Cat: LuCat, Scissors: LuScissors, Youtube: LuYoutube, Gamepad2: LuGamepad2 };
@@ -30,6 +32,7 @@ function CountUp({ to }) {
 
 export default function Resume() {
   const { education, experience, activities, skills, languages, hobbies } = useContent();
+  const commits = useCommits();
   return (
     <section className="resume" id="skills">
       <div className="resume__left">
@@ -162,6 +165,8 @@ export default function Resume() {
             ))}
           </div>
         </div>
+
+        {commits && <CommitActivity commits={commits} />}
       </div>
     </section>
   );

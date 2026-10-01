@@ -336,6 +336,123 @@ body {
   opacity: 0.8;
 }
 
+/* Commit line along the bottom of the starfield (HeroCommits.jsx) */
+.hero__body--commits {
+  --commits-graph-h: 260px;
+  /* Graph starts just below the socials; the stats sit beside the text column, under the photo */
+  padding-bottom: calc(var(--commits-graph-h) + 10px);
+}
+
+/* This star would land on the commit stats */
+.hero__body--commits .hero__star--clear-commits {
+  display: none;
+}
+
+.hero-commits__stats {
+  position: absolute;
+  left: 60px;
+  bottom: calc(var(--commits-graph-h) - 10px);
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 96px;
+  color: var(--cream);
+  pointer-events: none;
+}
+
+.hero-commits__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.15;
+}
+
+.hero-commits__label {
+  font-size: 13px;
+  color: #d9b9cc;
+}
+
+.hero-commits__total {
+  font-size: 44px;
+  font-weight: 900;
+}
+
+.hero-commits__star {
+  margin-right: 12px;
+  color: var(--gold);
+  font-size: 0.68em;
+  font-style: normal;
+  vertical-align: 0.12em;
+}
+
+.hero-commits__graph {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--commits-graph-h);
+}
+
+.hero-commits__graph svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-commits__line {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(255, 204, 203, 0.6));
+}
+
+.hero-commits__peak,
+.hero-commits__rule,
+.hero-commits__dot,
+.hero-commits__tip {
+  position: absolute;
+  pointer-events: none;
+}
+
+.hero-commits__peak {
+  /* `translate`, not `transform`, so the pop/twinkle animations don't undo it */
+  translate: -50% -140%;
+  color: var(--orange);
+  font-size: 22px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.hero-commits__rule {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 204, 203, 0.35);
+}
+
+.hero-commits__dot {
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 10px var(--orange);
+}
+
+.hero-commits__tip {
+  transform: translate(var(--tip-x, -50%), -150%);
+  background: var(--orange);
+  color: var(--black);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 /* Scroll button (overlaps into About section) */
 .hero__scroll {
   position: absolute;
@@ -875,6 +992,89 @@ body:has(#contact.contact--active)::before {
   color: var(--cream);
   opacity: 0.75;
   line-height: 1.4;
+}
+
+/* Commit graph under Hobbies (CommitActivity.jsx) */
+.commits-section {
+  position: relative;
+  z-index: 1;
+  margin-top: 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.commits-section__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.commits-section__head .hobbies__title {
+  margin-bottom: 0;
+}
+
+.commits-section__hover {
+  font-size: 13px;
+  color: #e4c4d6;
+  min-height: 18px;
+}
+
+.commit-graph {
+  --cell-gap: 3px;
+  /* Cells shrink to fit the panel but never grow past 11px */
+  --graph-max: calc(var(--weeks) * (11px + var(--cell-gap)) - var(--cell-gap));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commit-graph__months,
+.commit-graph__cells {
+  display: grid;
+  grid-template-columns: repeat(var(--weeks), minmax(0, 1fr));
+  column-gap: var(--cell-gap);
+  max-width: var(--graph-max);
+}
+
+.commit-graph__months {
+  font-size: 12px;
+  color: #d9b9cc;
+  white-space: nowrap;
+}
+
+.commit-graph__cells {
+  row-gap: var(--cell-gap);
+}
+
+.commit-graph__cell {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 30%;
+  background: rgba(242, 234, 213, 0.09);
+}
+
+.commit-graph__cell--1 { background: #8b4f80; }
+.commit-graph__cell--2 { background: #b8789c; }
+.commit-graph__cell--3 { background: var(--gold); }
+.commit-graph__cell--4 { background: var(--orange); }
+.commit-graph__cell--future { background: transparent; }
+
+.commit-graph__legend {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+  max-width: var(--graph-max);
+  padding-top: 4px;
+  font-size: 12px;
+  color: #d9b9cc;
+}
+
+.commit-graph__legend .commit-graph__cell {
+  width: 11px;
 }
 
 /* ── WORK ───────────────────────────────────────────────────────────────── */
@@ -1834,6 +2034,22 @@ body:has(#contact.contact--active)::before {
     padding: 24px 28px;
   }
 
+  .hero__body--commits {
+    --commits-graph-h: 170px;
+    padding-bottom: calc(var(--commits-graph-h) + 10px);
+  }
+
+  /* In the column flow under the socials, so wrapping stats push the graph down */
+  .hero-commits__stats {
+    position: static;
+    align-self: stretch;
+    column-gap: 40px;
+  }
+
+  .hero-commits__total {
+    font-size: 36px;
+  }
+
   .about {
     padding: 120px 28px 60px;
   }
@@ -1914,6 +2130,14 @@ body:has(#contact.contact--active)::before {
 
   .skills-grid {
     grid-template-columns: 1fr;
+  }
+
+  .commit-graph {
+    --cell-gap: 2px;
+  }
+
+  .commit-graph__months {
+    font-size: 10px;
   }
 
   .lightbox__btn--prev { left: 8px; }

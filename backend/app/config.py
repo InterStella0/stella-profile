@@ -26,3 +26,12 @@ SUPPORTERS_CORS_ORIGINS = [
 # Optional: raises the GitHub API limit from 60 to 5000 requests/hour
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_STARS_REFRESH_MINUTES = max(1, int(os.environ.get("GITHUB_STARS_REFRESH_MINUTES", "60")))
+
+# Commit graph (/api/commits). GitHub needs GITHUB_TOKEN too (GraphQL won't work without
+# one); use a token for GITHUB_USERNAME's own account to include private-repo commits.
+GITHUB_USERNAME = os.environ.get("GITHUB_USERNAME", "")
+GITLAB_USERNAME = os.environ.get("GITLAB_USERNAME", "")
+# Optional: a read_api token for GITLAB_USERNAME includes pushes to private projects
+GITLAB_TOKEN = os.environ.get("GITLAB_TOKEN", "")
+GITLAB_URL = os.environ.get("GITLAB_URL", "https://gitlab.com").rstrip("/")
+COMMITS_REFRESH_MINUTES = max(1, int(os.environ.get("COMMITS_REFRESH_MINUTES", "60")))
