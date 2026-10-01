@@ -23,8 +23,11 @@ CACHE_CONTROL = "public, max-age=60"
 # (e.g. the kofi_import CLI). Assumes a single uvicorn worker, as in the Dockerfile.
 CACHE_TTL_SECONDS = 3600
 MAX_LIMIT = 50
+ANONYMOUS_NAME = "Anonymous"
 
 visible = (Supporter.is_public.is_(True), Supporter.hidden.is_(False))
+# Private (donor's choice on Ko-fi) or hidden (admin's choice): counted, but never named.
+anonymous = or_(Supporter.is_public.is_(False), Supporter.hidden.is_(True))
 # Ko-fi payments, plus manual entries that were given an amount.
 donations = or_(Supporter.source == SupporterSource.kofi, Supporter.amount.is_not(None))
 
@@ -84,6 +87,13 @@ def distinct_visible_names(session: Session) -> list[str]:
     return list(seen.values())
 
 
+def anonymous_supporter_count(session: Session, listed_names: list[str]) -> int:
+    """Distinct private/hidden supporters whose name isn't already in `listed_names`."""
+    listed = {n.lower() for n in listed_names}
+    unnamed = {n.strip().lower() for n in session.scalars(select(Supporter.name).where(anonymous))}
+    return len(unnamed - listed)
+
+
 def _compute_top() -> list[TopSupporter]:
     first_name = array_agg(aggregate_order_by(Supporter.name, Supporter.created_at, Supporter.id))[1]
     latest_message = type_coerce(
@@ -118,12 +128,16 @@ def _compute_recent() -> list[RecentDonation]:
     with SessionLocal() as session:
         rows = session.scalars(
             select(Supporter)
-            .where(*visible, donations)
+            .where(donations)
             .order_by(Supporter.created_at.desc(), Supporter.id.desc())
             .limit(MAX_LIMIT)
         ).all()
+    # Private and hidden donations still show up so sites can say someone donated,
+    # but without the donor's name or message.
     return [
         RecentDonation(name=s.name.strip(), message=(s.message or "").strip() or None, created_at=s.created_at)
+        if s.is_public and not s.hidden
+        else RecentDonation(name=ANONYMOUS_NAME, message=None, created_at=s.created_at)
         for s in rows
     ]
 
@@ -133,3 +147,21 @@ def recent_donations(response: Response, limit: Limit = 10):
     """Most recent donations, newest first."""
     response.headers["Cache-Control"] = CACHE_CONTROL
     return _cached("recent", _compute_recent)[:limit]
+
+
+class AllSupporters(BaseModel):
+    names: list[str] = Field(description="Public supporters, each once, in order of first support")
+    anonymous: int = Field(description="Distinct private or hidden supporters not already listed in names")
+
+
+def _compute_all() -> list[AllSupporters]:
+    with SessionLocal() as session:
+        names = distinct_visible_names(session)
+        return [AllSupporters(names=names, anonymous=anonymous_supporter_count(session, names))]
+
+
+@router.get("/all", response_model=AllSupporters)
+def all_supporters(response: Response):
+    """Every public supporter once, plus how many anonymous ones there are (names withheld)."""
+    response.headers["Cache-Control"] = CACHE_CONTROL
+    return _cached("all", _compute_all)[0]
