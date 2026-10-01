@@ -23,9 +23,11 @@ CACHE_CONTROL = "public, max-age=60"
 # (e.g. the kofi_import CLI). Assumes a single uvicorn worker, as in the Dockerfile.
 CACHE_TTL_SECONDS = 3600
 MAX_LIMIT = 50
-ANONYMOUS_NAME = "Someone"
+ANONYMOUS_NAME = "Anonymous"
 
 visible = (Supporter.is_public.is_(True), Supporter.hidden.is_(False))
+# Private (donor's choice on Ko-fi) or hidden (admin's choice): counted, but never named.
+anonymous = or_(Supporter.is_public.is_(False), Supporter.hidden.is_(True))
 # Ko-fi payments, plus manual entries that were given an amount.
 donations = or_(Supporter.source == SupporterSource.kofi, Supporter.amount.is_not(None))
 
@@ -86,13 +88,10 @@ def distinct_visible_names(session: Session) -> list[str]:
 
 
 def _compute_top() -> list[TopSupporter]:
-    # A name is listed if any of its entries is public, and then all its donations count
-    # toward the total. Only public entries supply the name and message shown.
-    public = Supporter.is_public.is_(True)
-    first_name = array_agg(aggregate_order_by(Supporter.name, Supporter.created_at, Supporter.id)).filter(public)[1]
+    first_name = array_agg(aggregate_order_by(Supporter.name, Supporter.created_at, Supporter.id))[1]
     latest_message = type_coerce(
         array_agg(aggregate_order_by(Supporter.message, Supporter.created_at.desc(), Supporter.id.desc()))
-        .filter(public, func.nullif(func.trim(Supporter.message), "").is_not(None)),
+        .filter(func.nullif(func.trim(Supporter.message), "").is_not(None)),
         ARRAY(Text),
     )[1]
     total = func.sum(func.coalesce(Supporter.amount, 0))
@@ -100,9 +99,8 @@ def _compute_top() -> list[TopSupporter]:
     with SessionLocal() as session:
         rows = session.execute(
             select(first_name, latest_message)
-            .where(Supporter.hidden.is_(False), donations)
+            .where(*visible, donations)
             .group_by(func.lower(func.trim(Supporter.name)))
-            .having(func.bool_or(public))
             .order_by(total.desc(), first_at)
             .limit(MAX_LIMIT)
         ).all()
@@ -123,15 +121,15 @@ def _compute_recent() -> list[RecentDonation]:
     with SessionLocal() as session:
         rows = session.scalars(
             select(Supporter)
-            .where(Supporter.hidden.is_(False), donations)
+            .where(donations)
             .order_by(Supporter.created_at.desc(), Supporter.id.desc())
             .limit(MAX_LIMIT)
         ).all()
-    # Private donations still show up so sites can say "someone donated", but
-    # without the donor's name or message.
+    # Private and hidden donations still show up so sites can say someone donated,
+    # but without the donor's name or message.
     return [
         RecentDonation(name=s.name.strip(), message=(s.message or "").strip() or None, created_at=s.created_at)
-        if s.is_public
+        if s.is_public and not s.hidden
         else RecentDonation(name=ANONYMOUS_NAME, message=None, created_at=s.created_at)
         for s in rows
     ]
@@ -146,22 +144,19 @@ def recent_donations(response: Response, limit: Limit = 10):
 
 class AllSupporters(BaseModel):
     names: list[str] = Field(description="Public supporters, each once, in order of first support")
-    anonymous: int = Field(description="Distinct private supporters not already listed in names")
+    anonymous: int = Field(description="Distinct private or hidden supporters not already listed in names")
 
 
 def _compute_all() -> list[AllSupporters]:
     with SessionLocal() as session:
         names = distinct_visible_names(session)
         listed = {n.lower() for n in names}
-        private = session.scalars(
-            select(Supporter.name).where(Supporter.is_public.is_(False), Supporter.hidden.is_(False))
-        )
-        anonymous = {n.strip().lower() for n in private} - listed
-    return [AllSupporters(names=names, anonymous=len(anonymous))]
+        unnamed = {n.strip().lower() for n in session.scalars(select(Supporter.name).where(anonymous))}
+    return [AllSupporters(names=names, anonymous=len(unnamed - listed))]
 
 
 @router.get("/all", response_model=AllSupporters)
 def all_supporters(response: Response):
-    """Every public supporter once, plus how many private ones there are (names withheld)."""
+    """Every public supporter once, plus how many anonymous ones there are (names withheld)."""
     response.headers["Cache-Control"] = CACHE_CONTROL
     return _cached("all", _compute_all)[0]
