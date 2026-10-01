@@ -86,10 +86,13 @@ def distinct_visible_names(session: Session) -> list[str]:
 
 
 def _compute_top() -> list[TopSupporter]:
-    first_name = array_agg(aggregate_order_by(Supporter.name, Supporter.created_at, Supporter.id))[1]
+    # A name is listed if any of its entries is public, and then all its donations count
+    # toward the total. Only public entries supply the name and message shown.
+    public = Supporter.is_public.is_(True)
+    first_name = array_agg(aggregate_order_by(Supporter.name, Supporter.created_at, Supporter.id)).filter(public)[1]
     latest_message = type_coerce(
         array_agg(aggregate_order_by(Supporter.message, Supporter.created_at.desc(), Supporter.id.desc()))
-        .filter(func.nullif(func.trim(Supporter.message), "").is_not(None)),
+        .filter(public, func.nullif(func.trim(Supporter.message), "").is_not(None)),
         ARRAY(Text),
     )[1]
     total = func.sum(func.coalesce(Supporter.amount, 0))
@@ -97,8 +100,9 @@ def _compute_top() -> list[TopSupporter]:
     with SessionLocal() as session:
         rows = session.execute(
             select(first_name, latest_message)
-            .where(*visible, donations)
+            .where(Supporter.hidden.is_(False), donations)
             .group_by(func.lower(func.trim(Supporter.name)))
+            .having(func.bool_or(public))
             .order_by(total.desc(), first_at)
             .limit(MAX_LIMIT)
         ).all()
