@@ -147,12 +147,13 @@
 
   /* ── Hero commit line: draws left to right once the data arrives ── */
   /* A clip, not a dash: non-scaling-stroke measures dashes in screen px, so pathLength can't be trusted.
+     Clipped on the <svg> box, not the path: Firefox places a path's clip box wrong and slices the peak.
      Negative insets keep the caps and glow; `backwards` drops the clip once it's drawn. */
   @keyframes qm-line-draw {
     from { clip-path: inset(-16px 100% -16px -16px) }
     to   { clip-path: inset(-16px -16px -16px -16px) }
   }
-  .hero-commits__line { animation: qm-line-draw 1.6s cubic-bezier(.4, 0, .2, 1) .2s backwards; }
+  .hero-commits__graph svg { animation: qm-line-draw 1.6s cubic-bezier(.4, 0, .2, 1) .2s backwards; }
   .hero-commits__area { animation: qm-fade 1s ease-out .9s backwards; }
   .hero-commits__stats { animation: qm-rise .6s cubic-bezier(.2, .8, .2, 1) .3s backwards; }
   .hero-commits__peak { animation: qm-pop .6s cubic-bezier(.2, .9, .2, 1) 1.6s backwards, qm-twinkle 3.4s ease-in-out 2.2s infinite; }
