@@ -115,6 +115,18 @@
 
 .cv-panel__option--off { cursor: default; opacity: 0.6; }
 
+.cv-panel__text {
+  margin: 2px 0 0 24px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--cream);
+  color: var(--black);
+  font: 600 13px 'Nunito', sans-serif;
+}
+
+.cv-panel__text:focus { outline: 2px solid var(--orange); }
+
 .cv-panel__file {
   align-self: flex-start;
   margin-top: 4px;
@@ -142,11 +154,27 @@
 
 .cv-panel__quick {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 4px;
 }
 
+.cv-panel__project {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.cv-panel__project .cv-panel__option { flex: 1; }
+
+.cv-panel__divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 4px 0;
+}
+
 .cv-panel__quick button,
+.cv-panel__move,
 .cv-panel__reset {
   background: rgba(255, 255, 255, 0.12);
   color: var(--cream);
@@ -157,7 +185,19 @@
   cursor: pointer;
 }
 
+.cv-panel__move {
+  flex-shrink: 0;
+  width: 24px;
+  padding: 2px 0;
+}
+
+.cv-panel__move:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .cv-panel__quick button:hover,
+.cv-panel__move:not(:disabled):hover,
 .cv-panel__reset:hover { background: rgba(255, 255, 255, 0.22); }
 
 .cv-panel__reset { align-self: flex-start; }
@@ -294,7 +334,8 @@
   line-height: 0.92;
   letter-spacing: -0.04em;
   color: var(--cream);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .cv-name--outline {
@@ -370,6 +411,7 @@
   background: var(--green);
   color: var(--cream);
   border-radius: 7mm;
+  margin-top: 3mm; /* a sliver of cream between the black strip and the panel */
   padding: 6mm 10mm 8mm 8mm;
 }
 
@@ -494,6 +536,20 @@
 .cv-exp .cv-timeline__desc { color: rgba(0, 0, 0, 0.65); }
 
 .cv-traits { margin-top: 3mm; }
+
+/* An experience's bullet points, under its title */
+.cv-points { list-style: none; }
+
+.cv-points li {
+  position: relative;
+  padding-left: 3mm;
+}
+
+.cv-points li::before {
+  content: '•';
+  position: absolute;
+  left: 0.5mm;
+}
 
 /* Activities sit in the plum column */
 .cv-right .cv-timeline__item::before { color: var(--orange); }

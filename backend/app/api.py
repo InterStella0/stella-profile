@@ -104,7 +104,8 @@ def content(session: Session = Depends(get_session)) -> dict[str, Any]:
             "contact": contact,
         },
         "education": [
-            {"years": e.years, "org": e.org, "degree": e.degree} for e in _ordered(session, Education)
+            {"years": e.years, "org": e.org, "degree": e.degree, "certification": e.certification}
+            for e in _ordered(session, Education)
         ],
         "experience": [
             {"year": e.year, "role": e.role, "company": e.company, "desc": e.description}

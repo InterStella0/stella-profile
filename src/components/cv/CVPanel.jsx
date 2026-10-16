@@ -6,6 +6,7 @@ export const SECTIONS = [
   ['experience', 'Experience'],
   ['traits', 'Traits'],
   ['education', 'Education'],
+  ['certifications', 'Certifications'],
   ['projects', 'Projects'],
   ['skills', 'Skills'],
   ['languages', 'Languages'],
@@ -16,21 +17,38 @@ export const SECTIONS = [
 
 // Controls beside the sheet; hidden when printing.
 export default function CVPanel({
-  options, update, photoCv, upload, onUpload, projects, defaultProjects, hasCommits, pages, onDownload, onReset,
+  options, update, photoCv, upload, onUpload, names, onCustomName, contacts, activities, projects, defaultProjects,
+  hasCommits, hasCertifications, pages, onDownload, onReset,
 }) {
-  const toggleSection = key => {
+  // Sections, contact links (`contact:<key>`) and activities (`activity:<event>`) share one hide list.
+  const toggle = key => {
     const hide = new Set(options.hide);
     hide.has(key) ? hide.delete(key) : hide.add(key);
     update({ hide });
   };
 
-  const selected = new Set(options.projects ?? defaultProjects);
-  const toggleProject = title => {
-    const next = new Set(selected);
-    next.has(title) ? next.delete(title) : next.add(title);
-    // Keep the sheet's order (newest first), not click order.
-    update({ projects: projects.map(p => p.title).filter(t => next.has(t)) });
+  // Chosen projects in sheet order (titles that no longer exist are dropped); the rest follow, newest first.
+  const byTitle = new Map(projects.map(p => [p.title, p]));
+  const chosen = (options.projects ?? defaultProjects).filter(t => byTitle.has(t));
+  const isChosen = new Set(chosen);
+  const rest = projects.filter(p => !isChosen.has(p.title));
+
+  // A newly ticked project goes to the end of the sheet.
+  const toggleProject = title => update({
+    projects: isChosen.has(title) ? chosen.filter(t => t !== title) : [...chosen, title],
+  });
+  const moveProject = (i, by) => {
+    const next = [...chosen];
+    [next[i], next[i + by]] = [next[i + by], next[i]];
+    update({ projects: next });
   };
+
+  const sections = SECTIONS.filter(([key]) => (key !== 'commits' || hasCommits) && (key !== 'certifications' || hasCertifications));
+
+  const nameChoices = [
+    ['legal', 'Legal name', names.legal || null, !names.legal && 'set it in admin → Personal'],
+    ['site', 'Site name', names.site],
+  ];
 
   const photoChoices = [
     ['cv', 'CV photo', !photoCv && 'set it in admin → Personal'],
@@ -52,6 +70,44 @@ export default function CVPanel({
           ? `Spills onto ${pages} pages: hide a section or a few projects to fit one.`
           : '✦ Fits on one A4 page.'}
       </p>
+
+      <fieldset className="cv-panel__group">
+        <legend>Name</legend>
+        {nameChoices.map(([value, label, current, hint]) => (
+          <label key={value} className={`cv-panel__option${hint ? ' cv-panel__option--off' : ''}`}>
+            <input
+              type="radio"
+              name="cv-name"
+              checked={options.name === value}
+              disabled={Boolean(hint)}
+              onChange={() => update({ name: value })}
+            />
+            <span>{label}{current && <small> ({current})</small>}{hint && <small> ({hint})</small>}</span>
+          </label>
+        ))}
+        <label className={`cv-panel__option${names.custom.trim() ? '' : ' cv-panel__option--off'}`}>
+          <input
+            type="radio"
+            name="cv-name"
+            checked={options.name === 'custom'}
+            disabled={!names.custom.trim()}
+            onChange={() => update({ name: 'custom' })}
+          />
+          <span>Custom</span>
+        </label>
+        <input
+          type="text"
+          className="cv-panel__text"
+          placeholder="Type a name…"
+          value={names.custom}
+          onChange={e => onCustomName(e.target.value)}
+        />
+        <small className="cv-panel__note">A typed name is only used in this tab; it isn't saved anywhere.</small>
+        <label className="cv-panel__option">
+          <input type="checkbox" checked={options.echo} onChange={() => update({ echo: !options.echo })} />
+          <span>Outline the site name underneath <small>({names.site})</small></span>
+        </label>
+      </fieldset>
 
       <fieldset className="cv-panel__group">
         <legend>Photo</legend>
@@ -90,10 +146,20 @@ export default function CVPanel({
       </fieldset>
 
       <fieldset className="cv-panel__group">
-        <legend>Sections</legend>
-        {SECTIONS.filter(([key]) => key !== 'commits' || hasCommits).map(([key, label]) => (
+        <legend>Contact</legend>
+        {contacts.map(({ key, name, text }) => (
           <label key={key} className="cv-panel__option">
-            <input type="checkbox" checked={!options.hide.has(key)} onChange={() => toggleSection(key)} />
+            <input type="checkbox" checked={!options.hide.has(`contact:${key}`)} onChange={() => toggle(`contact:${key}`)} />
+            <span>{name} <small>{text}</small></span>
+          </label>
+        ))}
+      </fieldset>
+
+      <fieldset className="cv-panel__group">
+        <legend>Sections</legend>
+        {sections.map(([key, label]) => (
+          <label key={key} className="cv-panel__option">
+            <input type="checkbox" checked={!options.hide.has(key)} onChange={() => toggle(key)} />
             <span>{label}</span>
           </label>
         ))}
@@ -105,14 +171,66 @@ export default function CVPanel({
           <button type="button" onClick={() => update({ projects: null })}>highlights</button>
           <button type="button" onClick={() => update({ projects: projects.map(p => p.title) })}>all</button>
           <button type="button" onClick={() => update({ projects: [] })}>none</button>
+          <button
+            type="button"
+            onClick={() => update({ projects: projects.map(p => p.title).filter(t => isChosen.has(t)) })}
+          >
+            newest first
+          </button>
         </div>
-        {projects.map(p => (
+        {chosen.map((title, i) => {
+          const p = byTitle.get(title);
+          return (
+            <div key={title} className="cv-panel__project">
+              <label className="cv-panel__option">
+                <input type="checkbox" checked onChange={() => toggleProject(title)} />
+                <span>{title} <small>{p.year} · {p.status}</small></span>
+              </label>
+              <button
+                type="button"
+                className="cv-panel__move"
+                disabled={i === 0}
+                onClick={() => moveProject(i, -1)}
+                aria-label={`Move ${title} up`}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className="cv-panel__move"
+                disabled={i === chosen.length - 1}
+                onClick={() => moveProject(i, 1)}
+                aria-label={`Move ${title} down`}
+              >
+                ↓
+              </button>
+            </div>
+          );
+        })}
+        {chosen.length > 0 && rest.length > 0 && <hr className="cv-panel__divider" />}
+        {rest.map(p => (
           <label key={p.title} className="cv-panel__option">
-            <input type="checkbox" checked={selected.has(p.title)} onChange={() => toggleProject(p.title)} />
+            <input type="checkbox" checked={false} onChange={() => toggleProject(p.title)} />
             <span>{p.title} <small>{p.year} · {p.status}</small></span>
           </label>
         ))}
       </fieldset>
+
+      {activities.length > 0 && (
+        <fieldset className="cv-panel__group" disabled={options.hide.has('activities')}>
+          <legend>Activities</legend>
+          {activities.map(a => (
+            <label key={a.event} className="cv-panel__option">
+              <input
+                type="checkbox"
+                checked={!options.hide.has(`activity:${a.event}`)}
+                onChange={() => toggle(`activity:${a.event}`)}
+              />
+              <span>{a.event} <small>{a.year}</small></span>
+            </label>
+          ))}
+        </fieldset>
+      )}
 
       <button type="button" className="cv-panel__reset" onClick={onReset}>Reset to defaults</button>
     </aside>

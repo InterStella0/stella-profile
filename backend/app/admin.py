@@ -82,8 +82,11 @@ class PersonalAdmin(ModelView, model=Personal):
     can_create = False
     can_delete = False
     column_list = [Personal.name, Personal.tagline, Personal.email]
-    column_labels = {Personal.photo_cv: "CV photo (URL from Media)"}
-    form_args = {"photo_cv": {"description": "A more formal photo for /cv; only admins see it"}}
+    column_labels = {Personal.photo_cv: "CV photo (URL from Media)", Personal.legal_name: "Legal name"}
+    form_args = {
+        "photo_cv": {"description": "A more formal photo for /cv; only admins see it"},
+        "legal_name": {"description": "Your real name for /cv; only admins see it (the site keeps using Name)"},
+    }
 
 
 class SocialLinkAdmin(OrderedView, model=SocialLink):
@@ -94,13 +97,21 @@ class SocialLinkAdmin(OrderedView, model=SocialLink):
 class EducationAdmin(OrderedView, model=Education):
     name_plural = "Education"
     icon = "fa-solid fa-graduation-cap"
-    column_list = [Education.position, Education.years, Education.org, Education.degree]
+    column_list = [Education.position, Education.years, Education.org, Education.degree, Education.certification]
+    form_args = {
+        "certification": {"description": "A professional certification: /cv lists it under Certifications"},
+    }
 
 
 class ExperienceAdmin(OrderedView, model=Experience):
     name_plural = "Experience"
     icon = "fa-solid fa-briefcase"
-    column_list = [Experience.position, Experience.year, Experience.role, Experience.company]
+    column_list = [Experience.position, Experience.year, Experience.role, Experience.company, Experience.cv_company]
+    column_labels = {Experience.cv_company: "CV employer", Experience.cv_points: "CV bullet points"}
+    form_args = {
+        "cv_company": {"description": "The real employer name for /cv; only admins see it (the site keeps using Company)"},
+        "cv_points": {"description": "What you did there, one bullet per line, for /cv; only admins see it"},
+    }
 
 
 class ActivityAdmin(OrderedView, model=Activity):
@@ -268,12 +279,26 @@ async def _cv_session(request: Request) -> Response:
     if not await admin_auth.authenticate(request):
         return Response(status_code=401)
     with SessionLocal() as session:
-        photo_cv = session.scalar(select(Personal.photo_cv))
-    return JSONResponse({"photoCv": photo_cv or None}, headers={"Cache-Control": "no-store"})
+        row = session.execute(select(Personal.photo_cv, Personal.legal_name).order_by(Personal.id)).first()
+        jobs = session.scalars(select(Experience).order_by(Experience.position, Experience.id)).all()
+        # /api/content's experience list plus the private /cv details, so the sheet renders from this one.
+        experience = [
+            {
+                "year": e.year, "role": e.role, "company": e.company, "desc": e.description,
+                "employer": e.cv_company or None,
+                "points": [line.strip() for line in (e.cv_points or "").splitlines() if line.strip()],
+            }
+            for e in jobs
+        ]
+    photo_cv, legal_name = row or (None, None)
+    return JSONResponse(
+        {"photoCv": photo_cv or None, "legalName": legal_name or None, "experience": experience},
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 # Mounted at /api/cv: `GET /api/cv/session` is 200 for a logged-in admin, 401 otherwise.
-# nginx uses it to gate /cv, and the page itself reads the CV photo from it.
+# nginx uses it to gate /cv, and the page reads the private CV fields (photo, legal name, employers) from it.
 session_check_app = Starlette(
     routes=[Route("/session", _cv_session)],
     middleware=[Middleware(SessionMiddleware, secret_key=SESSION_SECRET, **SESSION_OPTIONS)],

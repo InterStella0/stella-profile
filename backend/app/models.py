@@ -82,6 +82,7 @@ class Personal(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
+    legal_name: Mapped[str | None] = mapped_column(String(200))
     tagline: Mapped[str] = mapped_column(String(300))
     photo_hero: Mapped[str] = mapped_column(String(500))
     photo_about: Mapped[str] = mapped_column(String(500))
@@ -117,6 +118,8 @@ class Education(Positioned, Base):
     years: Mapped[str] = mapped_column(String(100))
     org: Mapped[str] = mapped_column(String(300))
     degree: Mapped[str] = mapped_column(String(300))
+    # A professional certification: /cv lists it under Certifications instead of Education.
+    certification: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     def __str__(self) -> str:
         return self.degree
@@ -130,6 +133,9 @@ class Experience(Positioned, Base):
     role: Mapped[str] = mapped_column(String(200))
     company: Mapped[str | None] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(Text)
+    # Private, /cv only: the real employer name and achievement bullets (one per line).
+    cv_company: Mapped[str | None] = mapped_column(String(200))
+    cv_points: Mapped[str | None] = mapped_column(Text)
 
     def __str__(self) -> str:
         return self.role

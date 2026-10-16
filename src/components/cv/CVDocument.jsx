@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import { LuMail, LuMapPin, LuPhone } from 'react-icons/lu';
+import { LuGlobe, LuMail, LuMapPin, LuPhone } from 'react-icons/lu';
 import { useContent } from '../../data/ContentContext.jsx';
 import { commitCurve, formatCount } from '../../data/useCommits';
 import { hobbyIcons } from '../Resume';
@@ -19,12 +19,39 @@ const STARS = [
   ['96%', '52%', 9, 'glyph gold'],
 ];
 
+// Header name size in pt: one line fills the text column; past ~14 letters it
+// wraps onto two balanced lines and is sized for the longer one.
+const nameSize = (text, max) => {
+  const longestWord = Math.max(...text.split(/\s+/).map(w => w.length), 1);
+  const perLine = text.length > 14 ? Math.max(longestWord, Math.ceil(text.length / 2)) : text.length;
+  return Math.min(max, 480 / Math.max(perLine, 1));
+};
+
 // Links read as text on paper, so drop the scheme and trailing slash.
 const bare = href => href.replace(/^[a-z]+:(\/\/)?/i, '').replace(/\/$/, '');
 
 // A link that names the handle (github.com/me) prints in full; an opaque one
 // (discord.com/users/123…) prints just the handle, still linked in the PDF.
 const linkText = (href, label) => (bare(href).toLowerCase().includes(label.toLowerCase()) ? bare(href) : label);
+
+// The portfolio itself: the canonical URL from index.html, not wherever /cv is served from.
+const siteUrl = () => document.querySelector('meta[property="og:url"]')?.content || window.location.origin;
+
+const SOCIAL_NAMES = { github: 'GitHub', discord: 'Discord', kofi: 'Ko-fi' };
+
+// Everything the header's contact row can show; `key` lets the panel turn each one off.
+export function cvContacts(personal) {
+  const { contact } = personal;
+  return [
+    contact.email && { key: 'email', name: 'Email', Icon: LuMail, text: contact.email, href: `mailto:${contact.email}` },
+    contact.phone && { key: 'phone', name: 'Phone', Icon: LuPhone, text: contact.phone, href: `tel:${contact.phone.replace(/\s+/g, '')}` },
+    contact.location && { key: 'location', name: 'Location', Icon: LuMapPin, text: contact.location },
+    { key: 'website', name: 'Portfolio', Icon: LuGlobe, text: bare(siteUrl()), href: siteUrl() },
+    ...personal.socialLinks.map(({ key, href, label }) => ({
+      key, name: SOCIAL_NAMES[key] ?? key, Icon: socialIcons[key], text: linkText(href, label), href,
+    })),
+  ].filter(Boolean);
+}
 
 function Timeline({ items }) {
   return (
@@ -95,18 +122,15 @@ function CommitStats({ commits }) {
 }
 
 // The printable A4 sheet. `show(key)` says whether a section is turned on.
-const CVDocument = forwardRef(function CVDocument({ show, projects, photoSrc, photoY, commits }, ref) {
-  const { personal, education, experience, activities, skills, languages, hobbies } = useContent();
-  const { contact } = personal;
-  const name = personal.name.toUpperCase();
+const CVDocument = forwardRef(function CVDocument({
+  show, contacts, experience, activities, projects, photoSrc, photoY, name, echo, commits,
+}, ref) {
+  const { personal, education, skills, languages, hobbies } = useContent();
+  const title = name.toUpperCase();
+  // The site name, outlined under the name like the hero's echo lines.
+  const outline = echo?.toUpperCase();
+  const titleSize = nameSize(title, title.length > 14 ? 30 : 44);
   const profile = personal.longBio.split(/\n\s*\n/)[0];
-
-  const contacts = [
-    contact.email && { Icon: LuMail, text: contact.email, href: `mailto:${contact.email}` },
-    contact.phone && { Icon: LuPhone, text: contact.phone, href: `tel:${contact.phone.replace(/\s+/g, '')}` },
-    contact.location && { Icon: LuMapPin, text: contact.location },
-    ...personal.socialLinks.map(({ key, href, label }) => ({ Icon: socialIcons[key], text: linkText(href, label), href })),
-  ].filter(Boolean);
 
   // Traits sit under the experience timeline, as on the site (or alone if Experience is off).
   const traits = show('traits') && skills.traits.length > 0 && (
@@ -117,6 +141,8 @@ const CVDocument = forwardRef(function CVDocument({ show, projects, photoSrc, ph
   const hasExperience = show('experience') && experience.length > 0;
   const showProfile = show('profile') && Boolean(profile);
   const showCommits = show('commits') && Boolean(commits);
+  const schooling = education.filter(e => !e.certification);
+  const certifications = education.filter(e => e.certification);
 
   const hasSkills = [skills.software, skills.coding, skills.frameworks, skills.design].some(list => list.length);
 
@@ -143,9 +169,13 @@ const CVDocument = forwardRef(function CVDocument({ show, projects, photoSrc, ph
           </div>
         )}
 
-        <div className="cv-header__text" style={{ '--name-size': `${Math.min(44, 480 / Math.max(name.length, 1))}pt` }}>
-          <h1 className="cv-name">{name}</h1>
-          <div className="cv-name cv-name--outline" aria-hidden="true">{name}</div>
+        <div className="cv-header__text">
+          <h1 className="cv-name" style={{ '--name-size': `${titleSize}pt` }}>{title}</h1>
+          {outline && (
+            <div className="cv-name cv-name--outline" style={{ '--name-size': `${nameSize(outline, titleSize)}pt` }} aria-hidden="true">
+              {outline}
+            </div>
+          )}
           <p className="cv-tagline">{personal.tagline}</p>
           <ul className="cv-contacts">
             {contacts.map(({ Icon, text, href }) => (
@@ -173,18 +203,28 @@ const CVDocument = forwardRef(function CVDocument({ show, projects, photoSrc, ph
               <h2 className="cv-title">Experience</h2>
               <Timeline items={experience.map(e => ({
                 when: e.year,
-                title: e.company ? `${e.role} ${e.company}` : e.role,
-                desc: e.desc,
+                // The site's company reads "at [Redacted]"; the CV's employer is just the name.
+                title: e.employer ? `${e.role} at ${e.employer}` : e.company ? `${e.role} ${e.company}` : e.role,
+                desc: e.points.length > 0
+                  ? <ul className="cv-points">{e.points.map((point, i) => <li key={i}>{point}</li>)}</ul>
+                  : e.desc,
               }))} />
               {traits}
             </section>
           )}
           {!hasExperience && traits && <section className="cv-block">{traits}</section>}
 
-          {show('education') && education.length > 0 && (
+          {show('education') && schooling.length > 0 && (
             <section className="cv-block">
               <h2 className="cv-title">Education</h2>
-              <Timeline items={education.map(e => ({ when: e.years, title: e.org, desc: e.degree }))} />
+              <Timeline items={schooling.map(e => ({ when: e.years, title: e.org, desc: e.degree }))} />
+            </section>
+          )}
+
+          {show('certifications') && certifications.length > 0 && (
+            <section className="cv-block">
+              <h2 className="cv-title">Certifications</h2>
+              <Timeline items={certifications.map(e => ({ when: e.years, title: e.degree, desc: e.org }))} />
             </section>
           )}
 
