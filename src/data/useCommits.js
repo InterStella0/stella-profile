@@ -61,6 +61,24 @@ export function useCommits() {
   return data;
 }
 
+// Smooth weekly-commit curve in a W×H SVG user space, the line running between
+// TOP (busiest week) and BASE (no commits). Shared by the hero and the CV.
+export function commitCurve(weekly, { W, H, TOP, BASE }) {
+  // Light smoothing so single busy weeks read as a ridge, not a spike.
+  const sm = weekly.map((v, i) => (weekly[i - 1] ?? v) * 0.25 + v * 0.5 + (weekly[i + 1] ?? v) * 0.25);
+  const max = Math.max(...sm) || 1;
+  const last = sm.length - 1;
+  const pts = sm.map((v, i) => [(i / last) * W, BASE - (v / max) * (BASE - TOP)]);
+  // Catmull-Rom through every point, as cubic Béziers
+  let line = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < last; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    line += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6}`
+      + ` ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`;
+  }
+  return { line, area: `${line} L${W},${H} L0,${H} Z`, pts, peak: sm.indexOf(Math.max(...sm)) };
+}
+
 export const formatCount = n => n.toLocaleString('en-US');
 
 export const shortDate = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

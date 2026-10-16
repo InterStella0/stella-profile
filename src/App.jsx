@@ -8,12 +8,19 @@ import Supporters from './components/Supporters';
 import Footer from './components/Footer';
 import Book from './components/Book';
 import AllProjects from './components/AllProjects';
+import CVGenerator from './components/cv/CVGenerator';
 import { observeReveals } from './reveal';
 
-// Only two pages, so the path is checked directly instead of pulling in a router.
-const page = window.location.pathname.replace(/\/+$/, '') === '/projects' ? 'projects' : 'home';
+// Only three pages, so the path is checked directly instead of pulling in a router.
+const page = { '/projects': 'projects', '/cv': 'cv' }[window.location.pathname.replace(/\/+$/, '')] ?? 'home';
 
 export default function App() {
+  // The CV generator is its own screen: no nav, footer or scroll effects.
+  if (page === 'cv') return <CVGenerator />;
+  return <Site />;
+}
+
+function Site() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {

@@ -6,11 +6,15 @@ from datetime import timezone
 
 from fastapi import FastAPI
 from markupsafe import Markup, escape
-from sqladmin import Admin, ModelView, action
-from sqlalchemy import update
+from sqladmin import Admin, BaseView, ModelView, action, expose
+from sqlalchemy import select, update
 from sqladmin.authentication import AuthenticationBackend
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
-from starlette.responses import RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse, Response
+from starlette.routing import Route
 
 from app import github
 from app.supporters import invalidate_cache
@@ -34,6 +38,13 @@ from app.models import (
 )
 
 log = logging.getLogger(__name__)
+
+# Shared by the admin and the /api/cv session check, so both read the same cookie.
+SESSION_SECRET = SECRET_KEY
+if not SESSION_SECRET:
+    log.warning("SECRET_KEY is not set; using a random key, admin sessions reset on restart")
+    SESSION_SECRET = secrets.token_urlsafe(32)
+SESSION_OPTIONS = {"https_only": False, "same_site": "lax"}
 
 
 class AdminAuth(AuthenticationBackend):
@@ -71,6 +82,8 @@ class PersonalAdmin(ModelView, model=Personal):
     can_create = False
     can_delete = False
     column_list = [Personal.name, Personal.tagline, Personal.email]
+    column_labels = {Personal.photo_cv: "CV photo (URL from Media)"}
+    form_args = {"photo_cv": {"description": "A more formal photo for /cv; only admins see it"}}
 
 
 class SocialLinkAdmin(OrderedView, model=SocialLink):
@@ -237,22 +250,48 @@ class MediaAdmin(ModelView, model=Media):
             log.warning("Could not delete uploaded file %s", model.file)
 
 
-def setup_admin(app: FastAPI) -> Admin:
-    secret = SECRET_KEY
-    if not secret:
-        log.warning("SECRET_KEY is not set; using a random key, admin sessions reset on restart")
-        secret = secrets.token_urlsafe(32)
+class CVView(BaseView):
+    """Sidebar link to the /cv page (a client-side route, gated by session_check_app)."""
 
+    name = "CV generator"
+    icon = "fa-solid fa-file-pdf"
+
+    @expose("/cv", methods=["GET"])
+    async def cv(self, request: Request) -> RedirectResponse:
+        return RedirectResponse("/cv", status_code=302)
+
+
+admin_auth = AdminAuth(secret_key=SESSION_SECRET, **SESSION_OPTIONS)
+
+
+async def _cv_session(request: Request) -> Response:
+    if not await admin_auth.authenticate(request):
+        return Response(status_code=401)
+    with SessionLocal() as session:
+        photo_cv = session.scalar(select(Personal.photo_cv))
+    return JSONResponse({"photoCv": photo_cv or None}, headers={"Cache-Control": "no-store"})
+
+
+# Mounted at /api/cv: `GET /api/cv/session` is 200 for a logged-in admin, 401 otherwise.
+# nginx uses it to gate /cv, and the page itself reads the CV photo from it.
+session_check_app = Starlette(
+    routes=[Route("/session", _cv_session)],
+    middleware=[Middleware(SessionMiddleware, secret_key=SESSION_SECRET, **SESSION_OPTIONS)],
+)
+
+
+def setup_admin(app: FastAPI) -> Admin:
     admin = Admin(
         app,
         engine,
         base_url="/admin",
         title="stella-profile admin",
-        authentication_backend=AdminAuth(secret_key=secret, https_only=False, same_site="lax"),
+        authentication_backend=admin_auth,
     )
     for view in (
         PersonalAdmin, SocialLinkAdmin, EducationAdmin, ExperienceAdmin, ActivityAdmin, SkillTagAdmin,
         RatedSkillAdmin, LanguageAdmin, HobbyAdmin, ProjectAdmin, DecorationAdmin, SupporterAdmin, MediaAdmin,
+        CVView,
     ):
         admin.add_view(view)
     return admin

@@ -5,7 +5,7 @@ import { useCommits } from '../data/useCommits';
 import { prefersReducedMotion } from '../reveal';
 import HeroCommits from './HeroCommits';
 
-const socialIcons = { github: SiGithub, discord: SiDiscord, kofi: SiKofi };
+export const socialIcons = { github: SiGithub, discord: SiDiscord, kofi: SiKofi };
 
 // Background starfield: [left, top, size(px), kind, parallax depth, twinkle secs, delay secs, extra classes].
 // Positions are % of the banner so they spread with the viewport; `wide` ones hide on phones,

@@ -5,7 +5,7 @@ import { useCommits } from '../data/useCommits';
 import CommitActivity from './CommitActivity';
 import { useInView, prefersReducedMotion } from '../reveal';
 
-const hobbyIcons = { Code: LuCode, Palette: LuPalette, Cat: LuCat, Scissors: LuScissors, Youtube: LuYoutube, Gamepad2: LuGamepad2 };
+export const hobbyIcons = { Code: LuCode, Palette: LuPalette, Cat: LuCat, Scissors: LuScissors, Youtube: LuYoutube, Gamepad2: LuGamepad2 };
 
 // Counts up to `to` alongside the skill bar once it scrolls into view.
 function CountUp({ to }) {

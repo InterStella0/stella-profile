@@ -85,6 +85,7 @@ class Personal(Base):
     tagline: Mapped[str] = mapped_column(String(300))
     photo_hero: Mapped[str] = mapped_column(String(500))
     photo_about: Mapped[str] = mapped_column(String(500))
+    photo_cv: Mapped[str | None] = mapped_column(String(500))
     bio: Mapped[str] = mapped_column(Text)
     long_bio: Mapped[str] = mapped_column(Text)
     dob: Mapped[str] = mapped_column(String(100))

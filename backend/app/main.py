@@ -8,7 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app import api, commits, github, kofi, supporters
-from app.admin import setup_admin
+from app.admin import session_check_app, setup_admin
 from app.config import SUPPORTERS_CORS_ORIGINS, UPLOAD_DIR
 
 logging.basicConfig(level=logging.INFO)
@@ -57,4 +57,5 @@ app.include_router(commits.router)
 app.include_router(supporters.router)
 app.include_router(kofi.router)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/api/cv", session_check_app)
 setup_admin(app)
