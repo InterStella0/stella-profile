@@ -98,8 +98,11 @@ class EducationAdmin(OrderedView, model=Education):
     name_plural = "Education"
     icon = "fa-solid fa-graduation-cap"
     column_list = [Education.position, Education.years, Education.org, Education.degree, Education.certification]
+    column_labels = {Education.cv_points: "CV bullet points"}
     form_args = {
         "certification": {"description": "A professional certification: /cv lists it under Certifications"},
+        "cv_points": {"description": "Coursework, results, thesis... one bullet per line, for the in-depth CV on /cv; "
+                                    "only admins see it"},
     }
 
 
@@ -153,7 +156,7 @@ class ProjectAdmin(OrderedView, model=Project):
     column_sortable_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight]
     form_excluded_columns = [Project.github_stars, Project.github_stars_updated_at]
     column_labels = {Project.github_stars: "GitHub stars", Project.highlight: "Set as highlight work",
-                     Project.position: "Order"}
+                     Project.position: "Order", Project.cv_description: "CV description"}
     form_args = {
         "highlight": {"description": "Show on the front page's \"Highlight of my work\" section "
                                      "(every project is listed on /projects)"},
@@ -163,6 +166,9 @@ class ProjectAdmin(OrderedView, model=Project):
         "link": {"description": "The live site or demo (the Visit button)"},
         "github": {"label": "GitHub",
                    "description": "Repo link (github.com/owner/repo): its own button with the star count"},
+        "cv_description": {"description": "The real description for the in-depth CV on /cv (blank lines split "
+                                         "paragraphs); only admins see it. Empty, or the project is confidential: "
+                                         "the CV uses Blurb"},
     }
 
     async def after_model_change(self, data: dict, model: Project, is_created: bool, request: Request) -> None:
@@ -281,20 +287,42 @@ async def _cv_session(request: Request) -> Response:
     with SessionLocal() as session:
         row = session.execute(select(Personal.photo_cv, Personal.legal_name).order_by(Personal.id)).first()
         jobs = session.scalars(select(Experience).order_by(Experience.position, Experience.id)).all()
-        # /api/content's experience list plus the private /cv details, so the sheet renders from this one.
+        schools = session.scalars(select(Education).order_by(Education.position, Education.id)).all()
+        projects = session.execute(select(Project.title, Project.cv_description, Project.secret)).all()
+        # /api/content's experience and education lists plus the private /cv details, so the sheet renders from these.
         experience = [
             {
-                "year": e.year, "role": e.role, "company": e.company, "desc": e.description,
+                "id": e.id, "year": e.year, "role": e.role, "company": e.company, "desc": e.description,
                 "employer": e.cv_company or None,
-                "points": [line.strip() for line in (e.cv_points or "").splitlines() if line.strip()],
+                "points": _points(e.cv_points),
             }
             for e in jobs
         ]
+        education = [
+            {
+                "years": e.years, "org": e.org, "degree": e.degree, "certification": e.certification,
+                "points": _points(e.cv_points),
+            }
+            for e in schools
+        ]
+        # Keyed by title, as the page matches projects from /api/content. A confidential project
+        # only ever shows its public blurb, so its private description never leaves the database.
+        project_descriptions = {
+            title: description.strip() for title, description, secret in projects
+            if description and description.strip() and not secret
+        }
     photo_cv, legal_name = row or (None, None)
     return JSONResponse(
-        {"photoCv": photo_cv or None, "legalName": legal_name or None, "experience": experience},
+        {
+            "photoCv": photo_cv or None, "legalName": legal_name or None,
+            "experience": experience, "education": education, "projectDescriptions": project_descriptions,
+        },
         headers={"Cache-Control": "no-store"},
     )
+
+
+def _points(text: str | None) -> list[str]:
+    return [line.strip() for line in (text or "").splitlines() if line.strip()]
 
 
 # Mounted at /api/cv: `GET /api/cv/session` is 200 for a logged-in admin, 401 otherwise.

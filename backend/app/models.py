@@ -120,6 +120,8 @@ class Education(Positioned, Base):
     degree: Mapped[str] = mapped_column(String(300))
     # A professional certification: /cv lists it under Certifications instead of Education.
     certification: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Private, in-depth CV only: coursework, results, thesis... (one bullet per line).
+    cv_points: Mapped[str | None] = mapped_column(Text)
 
     def __str__(self) -> str:
         return self.degree
@@ -216,6 +218,8 @@ class Project(Positioned, Base):
     )
     # Shown in the front page's "Highlight of my work" section; /projects lists everything.
     highlight: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Private, in-depth CV only: the real description in place of the blurb (never used when secret).
+    cv_description: Mapped[str | None] = mapped_column(Text)
     # Filled in by app.github from the `github` repo link.
     github_stars: Mapped[int | None] = mapped_column(Integer)
     github_stars_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

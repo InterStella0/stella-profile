@@ -28,7 +28,7 @@ const nameSize = (text, max) => {
 };
 
 // Links read as text on paper, so drop the scheme and trailing slash.
-const bare = href => href.replace(/^[a-z]+:(\/\/)?/i, '').replace(/\/$/, '');
+export const bare = href => href.replace(/^[a-z]+:(\/\/)?/i, '').replace(/\/$/, '');
 
 // A link that names the handle (github.com/me) prints in full; an opaque one
 // (discord.com/users/123…) prints just the handle, still linked in the PDF.
@@ -109,7 +109,7 @@ function CommitLine({ weekly }) {
   );
 }
 
-function CommitStats({ commits }) {
+export function CommitStats({ commits }) {
   const { year, yearTotal, allTotal, stars, streak } = commits;
   return (
     <div className="cv-commits__stats">
@@ -121,15 +121,63 @@ function CommitStats({ commits }) {
   );
 }
 
-// The printable A4 sheet. `show(key)` says whether a section is turned on.
-const CVDocument = forwardRef(function CVDocument({
-  show, contacts, experience, activities, projects, photoSrc, photoY, name, echo, commits,
-}, ref) {
-  const { personal, education, skills, languages, hobbies } = useContent();
+// The plum band both formats open with: photo, name, tagline and contact links,
+// with the weekly commit line along its bottom when `commits` is given.
+export function CVHeader({ contacts, photoSrc, photoY, name, echo, commits }) {
+  const { personal } = useContent();
   const title = name.toUpperCase();
   // The site name, outlined under the name like the hero's echo lines.
   const outline = echo?.toUpperCase();
   const titleSize = nameSize(title, title.length > 14 ? 30 : 44);
+
+  return (
+    <header className="cv-header">
+      {STARS.map(([left, top, size, kind], i) => (
+        <em
+          key={i}
+          className={`cv-star ${kind.split(' ').map(k => `cv-star--${k}`).join(' ')}`}
+          style={{ left, top, '--size': `${size}pt` }}
+          aria-hidden="true"
+        >
+          {kind.startsWith('glyph') ? '✦' : null}
+        </em>
+      ))}
+
+      {commits && <CommitLine weekly={commits.weekly} />}
+
+      {photoSrc && (
+        <div className="cv-photo">
+          <div className="cv-photo__bg" />
+          <img className="cv-photo__img" src={photoSrc} alt="" style={{ objectPosition: `50% ${photoY}%` }} />
+        </div>
+      )}
+
+      <div className="cv-header__text">
+        <h1 className="cv-name" style={{ '--name-size': `${titleSize}pt` }}>{title}</h1>
+        {outline && (
+          <div className="cv-name cv-name--outline" style={{ '--name-size': `${nameSize(outline, titleSize)}pt` }} aria-hidden="true">
+            {outline}
+          </div>
+        )}
+        <p className="cv-tagline">{personal.tagline}</p>
+        <ul className="cv-contacts">
+          {contacts.map(({ Icon, text, href }) => (
+            <li key={text}>
+              <Icon className="cv-contacts__icon" aria-hidden="true" />
+              {href ? <a href={href}>{text}</a> : text}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </header>
+  );
+}
+
+// The one-page resume: a compact two-column A4 sheet. `show(key)` says whether a section is turned on.
+const CVDocument = forwardRef(function CVDocument({
+  show, contacts, experience, activities, projects, photoSrc, photoY, name, echo, commits,
+}, ref) {
+  const { personal, education, skills, languages, hobbies } = useContent();
   const profile = personal.longBio.split(/\n\s*\n/)[0];
 
   // Traits sit under the experience timeline, as on the site (or alone if Experience is off).
@@ -148,45 +196,14 @@ const CVDocument = forwardRef(function CVDocument({
 
   return (
     <article className="cv-sheet" ref={ref}>
-      <header className="cv-header">
-        {STARS.map(([left, top, size, kind], i) => (
-          <em
-            key={i}
-            className={`cv-star ${kind.split(' ').map(k => `cv-star--${k}`).join(' ')}`}
-            style={{ left, top, '--size': `${size}pt` }}
-            aria-hidden="true"
-          >
-            {kind.startsWith('glyph') ? '✦' : null}
-          </em>
-        ))}
-
-        {showCommits && <CommitLine weekly={commits.weekly} />}
-
-        {photoSrc && (
-          <div className="cv-photo">
-            <div className="cv-photo__bg" />
-            <img className="cv-photo__img" src={photoSrc} alt="" style={{ objectPosition: `50% ${photoY}%` }} />
-          </div>
-        )}
-
-        <div className="cv-header__text">
-          <h1 className="cv-name" style={{ '--name-size': `${titleSize}pt` }}>{title}</h1>
-          {outline && (
-            <div className="cv-name cv-name--outline" style={{ '--name-size': `${nameSize(outline, titleSize)}pt` }} aria-hidden="true">
-              {outline}
-            </div>
-          )}
-          <p className="cv-tagline">{personal.tagline}</p>
-          <ul className="cv-contacts">
-            {contacts.map(({ Icon, text, href }) => (
-              <li key={text}>
-                <Icon className="cv-contacts__icon" aria-hidden="true" />
-                {href ? <a href={href}>{text}</a> : text}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </header>
+      <CVHeader
+        contacts={contacts}
+        photoSrc={photoSrc}
+        photoY={photoY}
+        name={name}
+        echo={echo}
+        commits={showCommits ? commits : null}
+      />
 
       {/* The hero's black strip, holding the (more formal) profile paragraph and commit stats */}
       {(showProfile || showCommits) && (

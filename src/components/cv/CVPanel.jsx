@@ -1,6 +1,11 @@
 import React from 'react';
 
-// In sheet order: the left column, then the plum one.
+const FORMATS = [
+  ['resume', 'Resume', 'one page of highlights'],
+  ['cv', 'CV', 'in depth, runs on'],
+];
+
+// In sheet order: the resume's left column, then the plum one.
 export const SECTIONS = [
   ['profile', 'Profile'],
   ['experience', 'Experience'],
@@ -15,12 +20,31 @@ export const SECTIONS = [
   ['commits', 'Code activity'],
 ];
 
+// In sheet order, for the in-depth CV.
+export const CV_SECTIONS = [
+  ['commits', 'Code activity'],
+  ['profile', 'Profile'],
+  ['personal', 'Personal details'],
+  ['experience', 'Experience'],
+  ['education', 'Education'],
+  ['certifications', 'Certifications'],
+  ['projects', 'Projects'],
+  ['skills', 'Skills'],
+  ['traits', 'Traits'],
+  ['languages', 'Languages'],
+  ['activities', 'Activities'],
+  ['hobbies', 'Hobbies'],
+  ['references', 'References'],
+];
+
 // Controls beside the sheet; hidden when printing.
 export default function CVPanel({
-  options, update, photoCv, upload, onUpload, names, onCustomName, contacts, activities, projects, defaultProjects,
-  hasCommits, hasCertifications, pages, onDownload, onReset,
+  options, update, photoCv, upload, onUpload, names, onCustomName, contacts, experience, activities, projects, defaultProjects,
+  highlights, hasCommits, hasCertifications, pages, onDownload, onReset,
 }) {
-  // Sections, contact links (`contact:<key>`) and activities (`activity:<event>`) share one hide list.
+  const isCV = options.format === 'cv';
+  // Sections, contact links (`contact:<key>`), activities (`activity:<event>`) and real employers
+  // (`employer:<id>`) share one hide list.
   const toggle = key => {
     const hide = new Set(options.hide);
     hide.has(key) ? hide.delete(key) : hide.add(key);
@@ -43,7 +67,7 @@ export default function CVPanel({
     update({ projects: next });
   };
 
-  const sections = SECTIONS.filter(([key]) => (key !== 'commits' || hasCommits) && (key !== 'certifications' || hasCertifications));
+  const sections = (isCV ? CV_SECTIONS : SECTIONS).filter(([key]) => (key !== 'commits' || hasCommits) && (key !== 'certifications' || hasCertifications));
 
   const nameChoices = [
     ['legal', 'Legal name', names.legal || null, !names.legal && 'set it in admin → Personal'],
@@ -64,12 +88,32 @@ export default function CVPanel({
         <a className="cv-panel__back" href="/admin">← admin</a>
       </div>
 
+      <div className="cv-panel__formats" role="radiogroup" aria-label="Format">
+        {FORMATS.map(([value, label, note]) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={options.format === value}
+            className={`cv-panel__format${options.format === value ? ' cv-panel__format--on' : ''}`}
+            onClick={() => update({ format: value })}
+          >
+            <b>{label}</b>
+            <small>{note}</small>
+          </button>
+        ))}
+      </div>
+
       <button type="button" className="cv-panel__download" onClick={onDownload}>Download PDF</button>
-      <p className={`cv-panel__pages${pages > 1 ? ' cv-panel__pages--over' : ''}`}>
-        {pages > 1
-          ? `Spills onto ${pages} pages: hide a section or a few projects to fit one.`
-          : '✦ Fits on one A4 page.'}
-      </p>
+      {isCV ? (
+        <p className="cv-panel__pages">✦ About {pages} A4 page{pages > 1 ? 's' : ''}.</p>
+      ) : (
+        <p className={`cv-panel__pages${pages > 1 ? ' cv-panel__pages--over' : ''}`}>
+          {pages > 1
+            ? `Spills onto ${pages} pages: hide a section or a few projects to fit one.`
+            : '✦ Fits on one A4 page.'}
+        </p>
+      )}
 
       <fieldset className="cv-panel__group">
         <legend>Name</legend>
@@ -165,11 +209,37 @@ export default function CVPanel({
         ))}
       </fieldset>
 
+      {experience.length > 0 && (
+        <fieldset className="cv-panel__group" disabled={options.hide.has('experience')}>
+          <legend>Employers</legend>
+          {experience.map(e => (
+            <label key={e.id} className={`cv-panel__option${e.employer ? '' : ' cv-panel__option--off'}`}>
+              <input
+                type="checkbox"
+                checked={Boolean(e.employer) && !options.hide.has(`employer:${e.id}`)}
+                disabled={!e.employer}
+                onChange={() => toggle(`employer:${e.id}`)}
+              />
+              <span>
+                {e.role} <small>{e.year}</small>
+                <br />
+                <small>
+                  {e.employer
+                    ? <>{e.employer} · untick for “{e.company || 'no company'}”</>
+                    : <>{e.company || 'no company'} (set a CV employer in admin → Experience)</>}
+                </small>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+
       <fieldset className="cv-panel__group" disabled={options.hide.has('projects')}>
         <legend>Projects</legend>
+        {/* `null` is the format's default: the newest few highlights on the resume, everything on the CV */}
         <div className="cv-panel__quick">
-          <button type="button" onClick={() => update({ projects: null })}>highlights</button>
-          <button type="button" onClick={() => update({ projects: projects.map(p => p.title) })}>all</button>
+          <button type="button" onClick={() => update({ projects: isCV ? highlights : null })}>highlights</button>
+          <button type="button" onClick={() => update({ projects: isCV ? null : projects.map(p => p.title) })}>all</button>
           <button type="button" onClick={() => update({ projects: [] })}>none</button>
           <button
             type="button"
@@ -232,7 +302,7 @@ export default function CVPanel({
         </fieldset>
       )}
 
-      <button type="button" className="cv-panel__reset" onClick={onReset}>Reset to defaults</button>
+      <button type="button" className="cv-panel__reset" onClick={onReset}>Reset {isCV ? 'CV' : 'resume'} to defaults</button>
     </aside>
   );
 }
