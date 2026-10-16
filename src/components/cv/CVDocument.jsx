@@ -35,7 +35,7 @@ export const bare = href => href.replace(/^[a-z]+:(\/\/)?/i, '').replace(/\/$/, 
 const linkText = (href, label) => (bare(href).toLowerCase().includes(label.toLowerCase()) ? bare(href) : label);
 
 // The portfolio itself: the canonical URL from index.html, not wherever /cv is served from.
-const siteUrl = () => document.querySelector('meta[property="og:url"]')?.content || window.location.origin;
+export const siteUrl = () => document.querySelector('meta[property="og:url"]')?.content || window.location.origin;
 
 const SOCIAL_NAMES = { github: 'GitHub', discord: 'Discord', kofi: 'Ko-fi' };
 
@@ -51,6 +51,16 @@ export function cvContacts(personal) {
       key, name: SOCIAL_NAMES[key] ?? key, Icon: socialIcons[key], text: linkText(href, label), href,
     })),
   ].filter(Boolean);
+}
+
+// Under the projects: the rest are on the portfolio's /projects page.
+export function MoreProjects() {
+  const href = `${siteUrl().replace(/\/$/, '')}/projects`;
+  return (
+    <p className="cv-more">
+      <em aria-hidden="true">✦</em> More projects at <a href={href}>{bare(href)}</a>
+    </p>
+  );
 }
 
 function Timeline({ items }) {
@@ -269,6 +279,7 @@ const CVDocument = forwardRef(function CVDocument({
                   </li>
                 ))}
               </ul>
+              {show('projects-link') && <MoreProjects />}
             </section>
           )}
         </div>

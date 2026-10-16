@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { useContent } from '../../data/ContentContext.jsx';
 import { formatCount } from '../../data/useCommits';
-import { CVHeader, CommitStats, bare } from './CVDocument';
+import { CVHeader, CommitStats, MoreProjects, bare } from './CVDocument';
 
 // The in-depth CV: the resume's header, then one column that runs on over as many
 // A4 pages as it needs, with everything the resume leaves out.
@@ -178,6 +178,7 @@ const CVFullDocument = forwardRef(function CVFullDocument({
                 )}
               </Entry>
             ))}
+            {show('projects-link') && <MoreProjects />}
           </Section>
         )}
 

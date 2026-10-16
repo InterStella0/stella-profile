@@ -671,6 +671,21 @@
   margin-left: 1mm;
 }
 
+/* The link to the full project list on the portfolio */
+.cv-more {
+  margin-top: 2mm;
+  font-size: 8pt;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.cv-more em {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.cv-more a { text-decoration: underline !important; }
+
 /* Pills */
 .cv-pills {
   display: flex;

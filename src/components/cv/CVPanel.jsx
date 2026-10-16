@@ -1,4 +1,5 @@
 import React from 'react';
+import { bare, siteUrl } from './CVDocument';
 
 const FORMATS = [
   ['resume', 'Resume', 'one page of highlights'],
@@ -248,6 +249,11 @@ export default function CVPanel({
             newest first
           </button>
         </div>
+        <label className="cv-panel__option">
+          <input type="checkbox" checked={!options.hide.has('projects-link')} onChange={() => toggle('projects-link')} />
+          <span>Link to all projects <small>{bare(siteUrl())}/projects</small></span>
+        </label>
+        {chosen.length + rest.length > 0 && <hr className="cv-panel__divider" />}
         {chosen.map((title, i) => {
           const p = byTitle.get(title);
           return (
