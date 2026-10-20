@@ -91,6 +91,8 @@ class PersonalAdmin(ModelView, model=Personal):
     form_args = {
         "photo_cv": {"description": "A more formal photo for /cv; only admins see it"},
         "legal_name": {"description": "Your real name for /cv; only admins see it (the site keeps using Name)"},
+        "phone": {"description": "For /cv's contact row only (with the country code, e.g. +60 12-345 6789); "
+                                "the site never shows it"},
         "long_bio": {"description": "The site's About text; /cv's Profile uses it too unless CV profile is set"},
         "cv_profile": {"description": "A more formal profile for /cv in place of Long bio (blank lines split "
                                      "paragraphs; the one-page resume uses the first one); only admins see it"},
@@ -312,7 +314,7 @@ async def _cv_session(request: Request) -> Response:
         return Response(status_code=401)
     with SessionLocal() as session:
         row = session.execute(
-            select(Personal.photo_cv, Personal.legal_name, Personal.cv_profile, Personal.cv_options)
+            select(Personal.photo_cv, Personal.legal_name, Personal.cv_profile, Personal.phone, Personal.cv_options)
             .order_by(Personal.id)
         ).first()
         jobs = session.scalars(
@@ -344,11 +346,11 @@ async def _cv_session(request: Request) -> Response:
             title: description.strip() for title, description, secret in projects
             if description and description.strip() and not secret
         }
-    photo_cv, legal_name, cv_profile, cv_options = row or (None, None, None, None)
+    photo_cv, legal_name, cv_profile, phone, cv_options = row or (None, None, None, None, None)
     return JSONResponse(
         {
             "photoCv": photo_cv or None, "legalName": legal_name or None,
-            "profile": (cv_profile or "").strip() or None,
+            "profile": (cv_profile or "").strip() or None, "phone": (phone or "").strip() or None,
             "experience": experience, "education": education, "projectDescriptions": project_descriptions,
             "savedOptions": cv_options,
         },

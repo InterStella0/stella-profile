@@ -1,5 +1,6 @@
 /* ── CV GENERATOR (/cv) ─────────────────────────────────────────────────── */
-/* The sheet is sized in mm/pt so the screen preview matches the printed A4 page. */
+/* The sheet is sized in mm/pt so the screen preview matches the printed page; the generator
+   sets --page-w and --page-h for the chosen paper (A4 by default). */
 
 @page cv {
   size: A4;
@@ -296,8 +297,8 @@
 
 .cv-sheet {
   page: cv;
-  width: 210mm;
-  min-height: 297mm;
+  width: var(--page-w, 210mm);
+  min-height: var(--page-h, 297mm);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -311,7 +312,7 @@
 
 /* The resume's first page: the plum column runs down to its bottom edge */
 .cv-page {
-  min-height: 297mm;
+  min-height: var(--page-h, 297mm);
   display: flex;
   flex-direction: column;
 }
@@ -735,7 +736,6 @@
 
 /* Small groups that shouldn't split across a page break */
 .cv-software,
-.cv-bars-grid,
 .cv-pills,
 .cv-langs,
 .cv-hobbies {
@@ -862,7 +862,7 @@
 .cv-software__item {
   min-width: 8.5mm;
   height: 8.5mm;
-  padding: 0 1.5mm;
+  padding: 0 2mm;
   border-radius: 3.5mm;
   background: rgba(255, 255, 255, 0.13);
   display: flex;
@@ -872,50 +872,13 @@
   font-weight: 700;
 }
 
-.cv-bars-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4mm;
-  margin-bottom: 3.5mm;
-}
-
-.cv-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 1.3mm;
-}
-
-.cv-bar__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1.5mm;
-  margin-bottom: 0.7mm;
-}
-
-.cv-bar__name {
-  font-weight: 600;
-  font-size: 8pt;
-}
-
-.cv-bar__meta {
+/* A rated skill's level, when the panel turns them on */
+.cv-software__level,
+.cv-pill__level {
+  margin-left: 1.2mm;
   font-size: 6pt;
-  color: #e4c4d6;
-  white-space: nowrap;
-}
-
-.cv-bar__track {
-  height: 1.3mm;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.15);
-  overflow: hidden;
-}
-
-.cv-bar__fill {
-  height: 100%;
-  border-radius: 99px;
-  background: var(--cream);
-  opacity: 0.85;
+  font-weight: 600;
+  opacity: 0.7;
 }
 
 /* Languages + hobbies */
@@ -1179,7 +1142,7 @@
 
 .cvf-details dd { color: #555; }
 
-/* Skills: a label gutter like the dated rows, then bars or pills */
+/* Skills: a label gutter like the dated rows, then pills */
 .cvf-skills {
   display: grid;
   grid-template-columns: 24mm 1fr;
@@ -1197,41 +1160,6 @@
 
 /* Pills keep their height when a two-line label makes the row taller */
 .cvf-skills .cv-pills { align-items: flex-start; }
-
-.cvf-rated {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2mm 6mm;
-}
-
-.cvf-rated__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1.5mm;
-  margin-bottom: 0.8mm;
-}
-
-.cvf-rated__name { font-weight: 700; }
-
-.cvf-rated__level {
-  font-size: 7pt;
-  color: #777;
-  white-space: nowrap;
-}
-
-.cvf-rated__track {
-  height: 1.2mm;
-  border-radius: 99px;
-  background: color-mix(in srgb, var(--green) 14%, transparent);
-  overflow: hidden;
-}
-
-.cvf-rated__fill {
-  height: 100%;
-  border-radius: 99px;
-  background: var(--green);
-}
 
 /* Hobbies: one line of labels split by ✦ */
 .cvf-inline span:not(:last-child)::after {

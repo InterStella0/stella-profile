@@ -39,9 +39,10 @@ export const CV_SECTIONS = [
 // Controls beside the sheet; hidden when printing.
 export default function CVPanel({
   options, update, photoCv, upload, onUpload, names, onCustomName, contacts, experience, activities, projects, defaultProjects,
-  highlights, hasCommits, pages, overflow, moved, saveState, onDownload, onReset,
+  highlights, hasCommits, papers, pages, overflow, moved, saveState, onDownload, onReset,
 }) {
   const isCV = options.format === 'cv';
+  const paperName = papers[options.paper].label;
   // Sections, contact links (`contact:<key>`), activities (`activity:<event>`) and real employers
   // (`employer:<id>`) share one hide list.
   const toggle = key => {
@@ -105,15 +106,15 @@ export default function CVPanel({
 
       <button type="button" className="cv-panel__download" onClick={onDownload}>Download PDF</button>
       {isCV ? (
-        <p className="cv-panel__pages">✦ About {pages} A4 page{pages > 1 ? 's' : ''}.</p>
+        <p className="cv-panel__pages">✦ About {pages} {paperName} page{pages > 1 ? 's' : ''}.</p>
       ) : (
         // Projects moved onto a "More Projects" page are fine; the first page itself running over isn't.
         <p className={`cv-panel__pages${overflow ? ' cv-panel__pages--over' : ''}`}>
           {overflow
             ? `The first page spills over (${pages} pages): hide a section to fit it.`
             : moved > 0
-              ? `✦ ${pages} A4 pages: ${moved} project${moved > 1 ? 's' : ''} continue on a More Projects page. Untick a few to fit one.`
-              : '✦ Fits on one A4 page.'}
+              ? `✦ ${pages} ${paperName} pages: ${moved} project${moved > 1 ? 's' : ''} continue on a More Projects page. Untick a few to fit one.`
+              : `✦ Fits on one ${paperName} page.`}
         </p>
       )}
       <p className={`cv-panel__saved${saveState === 'error' ? ' cv-panel__saved--error' : ''}`} role="status">
@@ -123,6 +124,16 @@ export default function CVPanel({
           error: "Couldn't save your settings; they're still in this page's address. Change anything to retry.",
         }[saveState]}
       </p>
+
+      <fieldset className="cv-panel__group">
+        <legend>Paper</legend>
+        {Object.entries(papers).map(([value, { label, width, height }]) => (
+          <label key={value} className="cv-panel__option">
+            <input type="radio" name="cv-paper" checked={options.paper === value} onChange={() => update({ paper: value })} />
+            <span>{label} <small>{width} × {height} mm</small></span>
+          </label>
+        ))}
+      </fieldset>
 
       <fieldset className="cv-panel__group">
         <legend>Name</legend>
@@ -206,6 +217,15 @@ export default function CVPanel({
             <span>{name} <small>{text}</small></span>
           </label>
         ))}
+        {contacts.some(c => c.key === 'location') && (
+          <label className="cv-panel__option">
+            <input type="checkbox" checked={options.remote} onChange={() => update({ remote: !options.remote })} />
+            <span>Working remotely <small>adds your time zone and “Remote” to the location</small></span>
+          </label>
+        )}
+        {!contacts.some(c => c.key === 'phone') && (
+          <small className="cv-panel__note">Add a phone number in admin → Personal; only /cv shows it.</small>
+        )}
       </fieldset>
 
       <fieldset className="cv-panel__group">
@@ -216,6 +236,15 @@ export default function CVPanel({
             <span>{label}</span>
           </label>
         ))}
+        <label className="cv-panel__option">
+          <input
+            type="checkbox"
+            checked={options.levels}
+            disabled={options.hide.has('skills')}
+            onChange={() => update({ levels: !options.levels })}
+          />
+          <span>Skill levels <small>Advanced, Mastered… beside each language and framework</small></span>
+        </label>
       </fieldset>
 
       {experience.length > 0 && (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuMapPin, LuMail, LuPhone } from 'react-icons/lu';
+import { LuMapPin, LuMail } from 'react-icons/lu';
 import { SiGithub, SiDiscord, SiKofi } from 'react-icons/si';
 import { useContent } from '../data/ContentContext.jsx';
 
@@ -51,11 +51,6 @@ export default function About() {
             {personal.contact.email && (
               <div className="about__contact-item">
                 <LuMail size={14} strokeWidth={1.5} /> {personal.contact.email}
-              </div>
-            )}
-            {personal.contact.phone && (
-              <div className="about__contact-item">
-                <LuPhone size={14} strokeWidth={1.5} /> {personal.contact.phone}
               </div>
             )}
           </div>

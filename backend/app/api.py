@@ -60,9 +60,8 @@ def content(session: Session = Depends(get_session)) -> dict[str, Any]:
     if personal is None:
         raise HTTPException(503, "Content has not been seeded yet")
 
+    # The phone number is private: only /cv shows it (see app.admin's CV session).
     contact = {"location": personal.location, "email": personal.email}
-    if personal.phone:
-        contact["phone"] = personal.phone
 
     tags = _ordered(session, SkillTag)
     rated = _ordered(session, RatedSkill)

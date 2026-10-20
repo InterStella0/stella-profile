@@ -3,7 +3,26 @@ import { useContent } from '../../data/ContentContext.jsx';
 import { CVHeader, CommitStats, MoreProjects, bare, educationTitle } from './CVDocument';
 
 // The in-depth CV: the resume's header, then one column that runs on over as many
-// A4 pages as it needs, with everything the resume leaves out.
+// pages as it needs, with everything the resume leaves out.
+
+// A labelled row of pills: plain names, or rated skills ({ name, level }) with the level word
+// when `levels` is on. No bars or percentages: they read as guesses on paper.
+function Tags({ label, items, levels = false }) {
+  if (!items.length) return null;
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd className="cv-pills">
+        {items.map(t => (
+          <span key={t.name ?? t} className="cv-pill">
+            {t.name ?? t}
+            {levels && t.level && <small className="cv-pill__level">{t.level}</small>}
+          </span>
+        ))}
+      </dd>
+    </>
+  );
+}
 
 function Section({ title, children }) {
   return (
@@ -75,39 +94,10 @@ function JobProjects({ items, projectDescriptions }) {
   );
 }
 
-function Rated({ label, items }) {
-  if (!items.length) return null;
-  return (
-    <>
-      <dt>{label}</dt>
-      <dd className="cvf-rated">
-        {items.map(s => (
-          <div key={s.name}>
-            <div className="cvf-rated__head">
-              <span className="cvf-rated__name">{s.name}</span>
-              <span className="cvf-rated__level">{s.level}</span>
-            </div>
-            <div className="cvf-rated__track"><div className="cvf-rated__fill" style={{ width: `${s.percent}%` }} /></div>
-          </div>
-        ))}
-      </dd>
-    </>
-  );
-}
-
-function Tags({ label, items }) {
-  if (!items.length) return null;
-  return (
-    <>
-      <dt>{label}</dt>
-      <dd className="cv-pills">{items.map(t => <span key={t} className="cv-pill">{t}</span>)}</dd>
-    </>
-  );
-}
 
 const CVFullDocument = forwardRef(function CVFullDocument({
   show, contacts, experience, education, activities, projects, projectDescriptions, profile: profileText, photoSrc, photoY,
-  name, echo, commits,
+  name, echo, commits, levels = false,
 }, ref) {
   const { personal, skills, languages, hobbies, allProjects } = useContent();
   // The CV profile (or the site's long bio), a paragraph per blank-line-separated block.
@@ -210,8 +200,8 @@ const CVFullDocument = forwardRef(function CVFullDocument({
             <dl className="cvf-skills">
               {hasSkills && (
                 <>
-                  <Rated label="Programming Languages" items={skills.coding} />
-                  <Rated label="Frameworks" items={skills.frameworks} />
+                  <Tags label="Programming Languages" items={skills.coding} levels={levels} />
+                  <Tags label="Frameworks" items={skills.frameworks} levels={levels} />
                   <Tags label="Software" items={skills.software} />
                   <Tags label="Tools" items={skills.tools} />
                   <Tags label="Design" items={skills.design} />

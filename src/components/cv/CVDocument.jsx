@@ -39,13 +39,22 @@ export const siteUrl = () => document.querySelector('meta[property="og:url"]')?.
 
 const SOCIAL_NAMES = { github: 'GitHub', discord: 'Discord', kofi: 'Ko-fi' };
 
+// This browser's UTC offset, e.g. "GMT+8" (or "GMT+5:30").
+const utcOffset = () => {
+  const minutes = -new Date().getTimezoneOffset();
+  const abs = Math.abs(minutes);
+  return `GMT${minutes < 0 ? '-' : '+'}${Math.floor(abs / 60)}${abs % 60 ? `:${String(abs % 60).padStart(2, '0')}` : ''}`;
+};
+
 // Everything the header's contact row can show; `key` lets the panel turn each one off.
-export function cvContacts(personal) {
+// `phone` is the private one from the CV session; `remote` notes the time zone after the location.
+export function cvContacts(personal, { phone, remote = false } = {}) {
   const { contact } = personal;
+  const location = contact.location && (remote ? `${contact.location} (${utcOffset()}) · Remote` : contact.location);
   return [
     contact.email && { key: 'email', name: 'Email', Icon: LuMail, text: contact.email, href: `mailto:${contact.email}` },
-    contact.phone && { key: 'phone', name: 'Phone', Icon: LuPhone, text: contact.phone, href: `tel:${contact.phone.replace(/\s+/g, '')}` },
-    contact.location && { key: 'location', name: 'Location', Icon: LuMapPin, text: contact.location },
+    phone && { key: 'phone', name: 'Phone', Icon: LuPhone, text: phone, href: `tel:${phone.replace(/[^+\d]/g, '')}` },
+    location && { key: 'location', name: 'Location', Icon: LuMapPin, text: location },
     { key: 'website', name: 'Portfolio', Icon: LuGlobe, text: bare(siteUrl()), href: siteUrl() },
     ...personal.socialLinks.map(({ key, href, label }) => ({
       key, name: SOCIAL_NAMES[key] ?? key, Icon: socialIcons[key], text: linkText(href, label), href,
@@ -93,22 +102,19 @@ function Timeline({ items }) {
   );
 }
 
-function SkillBars({ label, items }) {
+// A labelled row of skill badges: plain names, or rated skills ({ name, level }) with the level
+// word when `levels` is on. No bars or percentages: they read as guesses on paper.
+function SkillRow({ label, items, levels = false }) {
   if (!items.length) return null;
   return (
-    <div>
+    <div className="cv-software">
       <div className="cv-label">{label}</div>
-      <div className="cv-bars">
-        {items.map(s => (
-          <div key={s.name}>
-            <div className="cv-bar__head">
-              <span className="cv-bar__name">{s.name}</span>
-              <span className="cv-bar__meta">{s.level} · {s.percent}%</span>
-            </div>
-            <div className="cv-bar__track"><div className="cv-bar__fill" style={{ width: `${s.percent}%` }} /></div>
-          </div>
-        ))}
-      </div>
+      {items.map(s => (
+        <span key={s.name ?? s} className="cv-software__item">
+          {s.name ?? s}
+          {levels && s.level && <small className="cv-software__level">{s.level}</small>}
+        </span>
+      ))}
     </div>
   );
 }
@@ -217,12 +223,12 @@ function ProjectItem({ p }) {
   );
 }
 
-// The one-page resume: a compact two-column A4 sheet. `show(key)` says whether a section is turned on.
+// The one-page resume: a compact two-column sheet. `show(key)` says whether a section is turned on.
 // `split` is how many projects fit on the first page; the rest get a "More Projects" page of their
 // own (null: they all fit). The generator works it out from the hidden full-length copy of the left column.
 const CVDocument = forwardRef(function CVDocument({
   show, contacts, experience, activities, projects, split = null, profile: profileText, photoSrc, photoY, name, echo,
-  commits,
+  commits, levels = false,
 }, ref) {
   const { personal, education, skills, languages, hobbies } = useContent();
   // The CV profile (or the site's long bio): the resume has room for its first paragraph.
@@ -323,22 +329,10 @@ const CVDocument = forwardRef(function CVDocument({
             {show('skills') && hasSkills && (
               <section className="cv-block">
                 <h2 className="cv-title">Skills</h2>
-                {skills.software.length > 0 && (
-                  <div className="cv-software">
-                    <div className="cv-label">Software Skills</div>
-                    {skills.software.map(s => <span key={s} className="cv-software__item">{s}</span>)}
-                  </div>
-                )}
-                {skills.tools.length > 0 && (
-                  <div className="cv-software">
-                    <div className="cv-label">Tools</div>
-                    {skills.tools.map(s => <span key={s} className="cv-software__item">{s}</span>)}
-                  </div>
-                )}
-                <div className="cv-bars-grid">
-                  <SkillBars label="Programming Languages" items={skills.coding} />
-                  <SkillBars label="Frameworks" items={skills.frameworks} />
-                </div>
+                <SkillRow label="Programming Languages" items={skills.coding} levels={levels} />
+                <SkillRow label="Frameworks" items={skills.frameworks} levels={levels} />
+                <SkillRow label="Software" items={skills.software} />
+                <SkillRow label="Tools" items={skills.tools} />
                 {skills.design.length > 0 && (
                   <div className="cv-pills">
                     {skills.design.map(d => <span key={d} className="cv-pill cv-pill--cream">{d}</span>)}

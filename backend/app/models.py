@@ -96,6 +96,7 @@ class Personal(Base):
     nationality: Mapped[str] = mapped_column(String(100))
     location: Mapped[str | None] = mapped_column(String(200))
     email: Mapped[str | None] = mapped_column(String(200))
+    # Private, /cv only: never sent to the public site.
     phone: Mapped[str | None] = mapped_column(String(50))
     # The /cv generator's last settings (its URL query string), saved so they survive across devices.
     cv_options: Mapped[str | None] = mapped_column(Text)

@@ -5,13 +5,18 @@ import CVDocument, { cvContacts } from './CVDocument';
 import CVFullDocument from './CVFullDocument';
 import CVPanel from './CVPanel';
 
-// One A4 page in CSS px (297mm at 96px per inch).
-const A4_HEIGHT = (297 / 25.4) * 96;
-const PRINT_MARGIN = (4 / 25.4) * 96;
+const mm = n => (n / 25.4) * 96; // in CSS px, at 96px per inch
+const PRINT_MARGIN = mm(4);
+
+// The paper sizes the sheet can be laid out for, in mm.
+const PAPERS = {
+  a4: { label: 'A4', size: 'A4', width: 210, height: 297 },
+  letter: { label: 'US Letter', size: 'letter', width: 215.9, height: 279.4 },
+};
 
 // Firefox takes the paper and margins (and so how far it shrinks the sheet) from the default
-// page, not the sheet's named `cv` page; cv.css loads site-wide, so this is only set on /cv.
-const PRINT_PAGE = '@page { size: A4; margin: 0; }';
+// page, not the sheet's named `cv` page, so both are set; cv.css loads site-wide, so this is only on /cv.
+const printPage = paper => `@page { size: ${paper.size}; margin: 0; } @page cv { size: ${paper.size}; margin: 0; }`;
 
 // ─── Options live in the URL query, so a setup survives reloads and can be bookmarked; ─
 // the backend keeps the latest one too, and /cv opened without a query starts from it
@@ -24,6 +29,9 @@ const PRINT_PAGE = '@page { size: A4; margin: 0; }';
 // photoY=0..100          vertical framing of the photo
 // name=legal|site        the name in the header; a typed-in name is never put in the URL
 // echo=0                 hide the outlined site name under it
+// paper=letter           US Letter instead of A4
+// remote=1               "(GMT+8) · Remote" after the location
+// levels=1               skill level words (Advanced, Mastered…) beside the rated skills
 
 function readOptions(search) {
   const q = new URLSearchParams(search);
@@ -37,13 +45,16 @@ function readOptions(search) {
     photoY: q.has('photoY') ? Math.min(100, Math.max(0, Number(q.get('photoY')) || 0)) : 50,
     name: ['legal', 'site'].includes(q.get('name')) ? q.get('name') : null,
     echo: q.get('echo') !== '0',
+    paper: q.get('paper') === 'letter' ? 'letter' : 'a4',
+    remote: q.get('remote') === '1',
+    levels: q.get('levels') === '1',
   };
 }
 
 // The settings both formats share.
 const DEFAULT_OPTIONS = { photo: null, photoY: 50, name: null, echo: true };
 
-function optionsQuery({ format, hide, projects, cvHide, cvProjects, photo, photoY, name, echo }) {
+function optionsQuery({ format, hide, projects, cvHide, cvProjects, photo, photoY, name, echo, paper, remote, levels }) {
   const q = new URLSearchParams();
   if (format === 'cv') q.set('format', 'cv');
   hide.forEach(key => q.append('hide', key));
@@ -54,6 +65,9 @@ function optionsQuery({ format, hide, projects, cvHide, cvProjects, photo, photo
   if (photoY !== 50) q.set('photoY', photoY);
   if (name && name !== 'custom') q.set('name', name);
   if (!echo) q.set('echo', '0');
+  if (paper === 'letter') q.set('paper', 'letter');
+  if (remote) q.set('remote', '1');
+  if (levels) q.set('levels', '1');
   return q.toString();
 }
 
@@ -149,7 +163,7 @@ export default function CVGenerator() {
   return <Generator {...session} />;
 }
 
-function Generator({ photoCv, legalName, profile, experience, education, projectDescriptions, savedOptions }) {
+function Generator({ photoCv, legalName, profile, phone, experience, education, projectDescriptions, savedOptions }) {
   const { personal, activities, allProjects } = useContent();
   const commits = useCommits();
   // A query in the URL (a bookmark) wins over the saved settings.
@@ -196,6 +210,9 @@ function Generator({ photoCv, legalName, profile, experience, education, project
   // Revoke the uploaded photo's object URL when it's replaced or the page goes away.
   useEffect(() => () => upload && URL.revokeObjectURL(upload.url), [upload]);
 
+  const paper = PAPERS[options.paper];
+  const pageHeight = mm(paper.height);
+
   // The sheet never shrinks below one page, so measure where each column's content
   // actually ends. The margin covers text wrapping a little differently in print.
   const measure = () => {
@@ -212,14 +229,14 @@ function Generator({ photoCv, legalName, profile, experience, education, project
       const style = getComputedStyle(flow);
       const padTop = parseFloat(style.paddingTop);
       const padBottom = parseFloat(style.paddingBottom);
-      const over = end(flow) + padBottom - A4_HEIGHT;
-      setPages(over <= 0 ? 1 : 1 + Math.ceil(over / (A4_HEIGHT - padTop - padBottom)));
+      const over = end(flow) + padBottom - pageHeight;
+      setPages(over <= 0 ? 1 : 1 + Math.ceil(over / (pageHeight - padTop - padBottom)));
       return;
     }
     // The resume keeps as many projects on page one as fit (measured in the hidden full-length
     // copy of the left column); the rest move to a "More Projects" page.
     const fits = (el, col) => el.getBoundingClientRect().bottom - top + PRINT_MARGIN
-      + parseFloat(getComputedStyle(col).paddingBottom) <= A4_HEIGHT;
+      + parseFloat(getComputedStyle(col).paddingBottom) <= pageHeight;
     const ghost = sheet.querySelector('.cv-left--ghost');
     if (ghost) {
       const kept = [...ghost.querySelectorAll('.cv-project')].findIndex(item => !fits(item, ghost));
@@ -227,10 +244,10 @@ function Generator({ photoCv, legalName, profile, experience, education, project
     }
     const ends = [...sheet.querySelectorAll('.cv-page:first-child :is(.cv-left:not(.cv-left--ghost), .cv-right)')]
       .map(col => end(col) + parseFloat(getComputedStyle(col).paddingBottom));
-    const first = Math.max(1, Math.ceil(Math.max(...ends) / A4_HEIGHT));
+    const first = Math.max(1, Math.ceil(Math.max(...ends) / pageHeight));
     const more = sheet.querySelector('.cv-more-body');
     const page = more?.parentElement.getBoundingClientRect().top - top;
-    const rest = more ? Math.max(1, Math.ceil((end(more) - page + parseFloat(getComputedStyle(more).paddingBottom)) / A4_HEIGHT)) : 0;
+    const rest = more ? Math.max(1, Math.ceil((end(more) - page + parseFloat(getComputedStyle(more).paddingBottom)) / pageHeight)) : 0;
     setPages(first + rest);
     setOverflow(first > 1);
   };
@@ -242,7 +259,7 @@ function Generator({ photoCv, legalName, profile, experience, education, project
     sheetRef.current.querySelectorAll('.cv-header, .cv-body, .cvf-body').forEach(el => ro.observe(el));
     document.fonts.ready.then(measure);
     return () => ro.disconnect();
-  }, [options.format]);
+  }, [options.format, options.paper]);
 
   const update = changes => setOptions(o => ({ ...o, ...changes }));
 
@@ -286,7 +303,7 @@ function Generator({ photoCv, legalName, profile, experience, education, project
 
   const byTitle = new Map(allProjects.map(p => [p.title, p]));
   const show = key => !hide.has(key);
-  const contacts = cvContacts(personal);
+  const contacts = cvContacts(personal, { phone, remote: options.remote });
   // A job turned off in the panel keeps its public (redacted) company instead of the real employer.
   const jobs = experience.map(e => (show(`employer:${e.id}`) ? e : { ...e, employer: null }));
   const Document = isCV ? CVFullDocument : CVDocument;
@@ -295,8 +312,9 @@ function Generator({ photoCv, legalName, profile, experience, education, project
   const moved = !isCV && show('projects') && split != null ? Math.max(0, sheetProjects.length - split) : 0;
 
   return (
-    <div className="cv-app">
-      <style>{PRINT_PAGE}</style>
+    // The sheet's size comes from these, so the preview matches the chosen paper.
+    <div className="cv-app" style={{ '--page-w': `${paper.width}mm`, '--page-h': `${paper.height}mm` }}>
+      <style>{printPage(paper)}</style>
       {/* Printed on every page behind the sheet, so a last page's empty end stays cream (Firefox) */}
       <div className="cv-print-bg" aria-hidden="true" />
       <CVPanel
@@ -314,6 +332,7 @@ function Generator({ photoCv, legalName, profile, experience, education, project
         experience={experience}
         activities={activities}
         hasCommits={Boolean(commits)}
+        papers={PAPERS}
         pages={pages}
         overflow={overflow}
         saveState={saveState}
@@ -338,6 +357,7 @@ function Generator({ photoCv, legalName, profile, experience, education, project
           name={name}
           echo={options.echo ? personal.name : null}
           commits={commits}
+          levels={options.levels}
         />
       </main>
     </div>
