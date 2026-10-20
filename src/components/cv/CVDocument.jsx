@@ -53,11 +53,19 @@ export function cvContacts(personal) {
   ].filter(Boolean);
 }
 
-// Under a job: the projects linked to it in the admin, by title.
-export function JobProjects({ titles, className = '' }) {
+// Under a job on the resume: the projects linked to it in the admin, by title, in two columns.
+function JobProjects({ titles }) {
   if (!titles?.length) return null;
-  return <p className={`cv-job-projects ${className}`}><b>Projects:</b> {titles.join(' · ')}</p>;
+  return (
+    <div className="cv-job-projects">
+      <div className="cv-job-projects__label">Key projects</div>
+      <ul>{titles.map(t => <li key={t}>{t}</li>)}</ul>
+    </div>
+  );
 }
+
+// "Education & Certifications" once a certification is listed alongside the schooling.
+export const educationTitle = education => (education.some(e => e.certification) ? 'Education & Certifications' : 'Education');
 
 // Under the projects: the rest are on the portfolio's /projects page.
 export function MoreProjects() {
@@ -229,12 +237,10 @@ const CVDocument = forwardRef(function CVDocument({
   const hasExperience = show('experience') && experience.length > 0;
   const showProfile = show('profile') && Boolean(profile);
   const showCommits = show('commits') && Boolean(commits);
-  const schooling = education.filter(e => !e.certification);
-  const certifications = education.filter(e => e.certification);
   const showProjects = show('projects') && projects.length > 0;
   const moreProjects = showProjects && split != null ? projects.slice(split) : [];
 
-  const hasSkills = [skills.software, skills.coding, skills.frameworks, skills.design].some(list => list.length);
+  const hasSkills = [skills.software, skills.tools, skills.coding, skills.frameworks, skills.design].some(list => list.length);
 
   // The left column with the given projects; the link to the rest closes the projects when it all fits.
   const left = (list, moreLink) => (
@@ -260,17 +266,13 @@ const CVDocument = forwardRef(function CVDocument({
       )}
       {!hasExperience && traits && <section className="cv-block">{traits}</section>}
 
-      {show('education') && schooling.length > 0 && (
+      {/* In the admin's order; a certification leads with its name, schooling with the school */}
+      {show('education') && education.length > 0 && (
         <section className="cv-block">
-          <h2 className="cv-title">Education</h2>
-          <Timeline items={schooling.map(e => ({ when: e.years, title: e.org, desc: e.degree }))} />
-        </section>
-      )}
-
-      {show('certifications') && certifications.length > 0 && (
-        <section className="cv-block">
-          <h2 className="cv-title">Certifications</h2>
-          <Timeline items={certifications.map(e => ({ when: e.years, title: e.degree, desc: e.org }))} />
+          <h2 className="cv-title">{educationTitle(education)}</h2>
+          <Timeline items={education.map(e => (e.certification
+            ? { when: e.years, title: e.degree, desc: e.org }
+            : { when: e.years, title: e.org, desc: e.degree }))} />
         </section>
       )}
 
@@ -325,6 +327,12 @@ const CVDocument = forwardRef(function CVDocument({
                   <div className="cv-software">
                     <div className="cv-label">Software Skills</div>
                     {skills.software.map(s => <span key={s} className="cv-software__item">{s}</span>)}
+                  </div>
+                )}
+                {skills.tools.length > 0 && (
+                  <div className="cv-software">
+                    <div className="cv-label">Tools</div>
+                    {skills.tools.map(s => <span key={s} className="cv-software__item">{s}</span>)}
                   </div>
                 )}
                 <div className="cv-bars-grid">

@@ -694,9 +694,38 @@
   left: 0.5mm;
 }
 
-/* The projects linked to a job, under its description */
-.cv-job-projects { margin-top: 0.8mm; }
-.cv-job-projects b { font-weight: 700; }
+/* The projects linked to a job, under its description: titles flowing down two columns */
+.cv-job-projects { margin-top: 1.2mm; }
+
+.cv-job-projects__label {
+  font-weight: 800;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--black);
+  margin-bottom: 0.4mm;
+}
+
+.cv-job-projects ul {
+  list-style: none;
+  columns: 2;
+  column-gap: 4mm;
+}
+
+.cv-job-projects li {
+  position: relative;
+  break-inside: avoid;
+  margin-bottom: 0.3mm;
+  padding-left: 3mm;
+  line-height: 1.3;
+}
+
+.cv-job-projects li::before {
+  content: '›';
+  position: absolute;
+  left: 0.5mm;
+  font-weight: 800;
+}
 
 /* Activities sit in the plum column */
 .cv-right .cv-timeline__item::before { color: var(--orange); }
@@ -1101,12 +1130,37 @@
 
 .cvf-points li + li { margin-top: 0.6mm; }
 
-.cvf-job-projects {
-  margin-top: 1.2mm;
-  color: #333;
+/* A job's projects, each written up under it and set off by a rule */
+.cvf-entry--long { break-inside: auto; }
+
+.cvf-job-projects { margin-top: 2.5mm; }
+
+.cvf-job-projects__label {
+  font-weight: 800;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--green);
+  margin-bottom: 1.2mm;
+  break-after: avoid;
 }
 
-.cvf-job-projects b { color: var(--green); }
+.cvf-job-project {
+  break-inside: avoid;
+  padding-left: 3.5mm;
+  border-left: 0.5mm solid color-mix(in srgb, var(--gold) 70%, transparent);
+}
+
+.cvf-job-project + .cvf-job-project { margin-top: 2.5mm; }
+
+.cvf-job-project__title {
+  font-weight: 800;
+  font-size: 9pt;
+}
+
+.cvf-job-project .cvf-para { color: #444; }
+.cvf-job-project .cv-project__meta { margin-top: 1.2mm; }
+.cvf-job-project .cv-project__link { margin-left: 0; }
 
 .cvf-entry .cv-project__meta { margin-top: 2mm; }
 .cvf-entry .cv-project__link { margin-left: 0; }

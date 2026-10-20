@@ -11,8 +11,7 @@ export const SECTIONS = [
   ['profile', 'Profile'],
   ['experience', 'Experience'],
   ['traits', 'Traits'],
-  ['education', 'Education'],
-  ['certifications', 'Certifications'],
+  ['education', 'Education & certifications'],
   ['projects', 'Projects'],
   ['skills', 'Skills'],
   ['languages', 'Languages'],
@@ -27,8 +26,7 @@ export const CV_SECTIONS = [
   ['profile', 'Profile'],
   ['personal', 'Personal details'],
   ['experience', 'Experience'],
-  ['education', 'Education'],
-  ['certifications', 'Certifications'],
+  ['education', 'Education & certifications'],
   ['projects', 'Projects'],
   ['skills', 'Skills'],
   ['traits', 'Traits'],
@@ -41,7 +39,7 @@ export const CV_SECTIONS = [
 // Controls beside the sheet; hidden when printing.
 export default function CVPanel({
   options, update, photoCv, upload, onUpload, names, onCustomName, contacts, experience, activities, projects, defaultProjects,
-  highlights, hasCommits, hasCertifications, pages, overflow, moved, saveState, onDownload, onReset,
+  highlights, hasCommits, pages, overflow, moved, saveState, onDownload, onReset,
 }) {
   const isCV = options.format === 'cv';
   // Sections, contact links (`contact:<key>`), activities (`activity:<event>`) and real employers
@@ -68,7 +66,7 @@ export default function CVPanel({
     update({ projects: next });
   };
 
-  const sections = (isCV ? CV_SECTIONS : SECTIONS).filter(([key]) => (key !== 'commits' || hasCommits) && (key !== 'certifications' || hasCertifications));
+  const sections = (isCV ? CV_SECTIONS : SECTIONS).filter(([key]) => key !== 'commits' || hasCommits);
 
   const nameChoices = [
     ['legal', 'Legal name', names.legal || null, !names.legal && 'set it in admin → Personal'],

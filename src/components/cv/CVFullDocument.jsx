@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import { useContent } from '../../data/ContentContext.jsx';
-import { CVHeader, CommitStats, JobProjects, MoreProjects, bare } from './CVDocument';
+import { CVHeader, CommitStats, MoreProjects, bare, educationTitle } from './CVDocument';
 
 // The in-depth CV: the resume's header, then one column that runs on over as many
 // A4 pages as it needs, with everything the resume leaves out.
@@ -15,9 +15,9 @@ function Section({ title, children }) {
 }
 
 // One dated row: the date in the gutter, the details beside it.
-function Entry({ when, title, aside, sub, children }) {
+function Entry({ when, title, aside, sub, className = '', children }) {
   return (
-    <div className="cvf-entry">
+    <div className={`cvf-entry ${className}`}>
       <div className="cvf-entry__when">{when}</div>
       <div className="cvf-entry__body">
         <div className="cvf-entry__head">
@@ -34,6 +34,45 @@ function Entry({ when, title, aside, sub, children }) {
 function Points({ items }) {
   if (!items?.length) return null;
   return <ul className="cv-points cvf-points">{items.map((point, i) => <li key={i}>{point}</li>)}</ul>;
+}
+
+// A project's description (the private one when there is one, never for confidential projects,
+// else the blurb), then its tags and links.
+function ProjectDetails({ p, description }) {
+  return (
+    <>
+      {(description ?? p.blurb).split(/\n\s*\n/).map((para, i) => (
+        <p key={i} className="cvf-para">{para}</p>
+      ))}
+      {(p.tags.length > 0 || p.link || p.github) && (
+        <div className="cv-project__meta">
+          {p.tags.map(t => <span key={t} className="cv-pill">{t}</span>)}
+          {[p.link, p.github].filter(Boolean).map(href => (
+            <a key={href} className="cv-project__link" href={href}>{bare(href)}</a>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// Under a job: each project made there, written up in full.
+function JobProjects({ items, projectDescriptions }) {
+  if (!items.length) return null;
+  return (
+    <div className="cvf-job-projects">
+      <div className="cvf-job-projects__label">Key projects</div>
+      {items.map(p => (
+        <div key={p.title} className="cvf-job-project">
+          <div className="cvf-entry__head">
+            <span className="cvf-job-project__title">{p.title}</span>
+            <span className="cvf-entry__aside">{p.year}</span>
+          </div>
+          <ProjectDetails p={p} description={projectDescriptions[p.title]} />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function Rated({ label, items }) {
@@ -70,15 +109,19 @@ const CVFullDocument = forwardRef(function CVFullDocument({
   show, contacts, experience, education, activities, projects, projectDescriptions, profile: profileText, photoSrc, photoY,
   name, echo, commits,
 }, ref) {
-  const { personal, skills, languages, hobbies } = useContent();
+  const { personal, skills, languages, hobbies, allProjects } = useContent();
   // The CV profile (or the site's long bio), a paragraph per blank-line-separated block.
   const profile = profileText.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
   const details = [['Date of birth', personal.dob], ['Nationality', personal.nationality]].filter(([, value]) => value);
   const showCommits = show('commits') && Boolean(commits);
-  const schooling = education.filter(e => !e.certification);
-  const certifications = education.filter(e => e.certification);
+  // Projects written up under their job aren't repeated under Projects, which then holds the personal ones.
+  const byTitle = new Map(allProjects.map(p => [p.title, p]));
+  const jobProjects = e => e.projects.map(t => byTitle.get(t)).filter(Boolean);
+  const showExperience = show('experience') && experience.length > 0;
+  const atJobs = new Set(showExperience ? experience.flatMap(e => e.projects) : []);
+  const ownProjects = projects.filter(p => !atJobs.has(p.title));
   const traits = show('traits') ? skills.traits : [];
-  const hasSkills = show('skills') && [skills.coding, skills.frameworks, skills.software, skills.design].some(l => l.length);
+  const hasSkills = show('skills') && [skills.coding, skills.frameworks, skills.software, skills.tools, skills.design].some(l => l.length);
   const sources = commits && [commits.github != null && 'GitHub', commits.gitlab != null && 'GitLab'].filter(Boolean);
 
   return (
@@ -122,21 +165,28 @@ const CVFullDocument = forwardRef(function CVFullDocument({
           </Section>
         )}
 
-        {show('experience') && experience.length > 0 && (
+        {showExperience && (
           <Section title="Experience">
             {experience.map((e, i) => (
-              <Entry key={i} when={e.year} title={e.role} sub={e.employer ?? e.company?.replace(/^at\s+/i, '')}>
+              // A job with projects may run across a page break; each project holds together.
+              <Entry
+                key={i}
+                when={e.year}
+                title={e.role}
+                sub={e.employer ?? e.company?.replace(/^at\s+/i, '')}
+                className={e.projects.length ? 'cvf-entry--long' : ''}
+              >
                 {e.desc && <p className="cvf-para">{e.desc}</p>}
                 <Points items={e.points} />
-                <JobProjects titles={e.projects} className="cvf-job-projects" />
+                <JobProjects items={jobProjects(e)} projectDescriptions={projectDescriptions} />
               </Entry>
             ))}
           </Section>
         )}
 
-        {show('education') && schooling.length > 0 && (
-          <Section title="Education">
-            {schooling.map((e, i) => (
+        {show('education') && education.length > 0 && (
+          <Section title={educationTitle(education)}>
+            {education.map((e, i) => (
               <Entry key={i} when={e.years} title={e.degree} sub={e.org}>
                 <Points items={e.points} />
               </Entry>
@@ -144,32 +194,11 @@ const CVFullDocument = forwardRef(function CVFullDocument({
           </Section>
         )}
 
-        {show('certifications') && certifications.length > 0 && (
-          <Section title="Certifications">
-            {certifications.map((e, i) => (
-              <Entry key={i} when={e.years} title={e.degree} sub={e.org}>
-                <Points items={e.points} />
-              </Entry>
-            ))}
-          </Section>
-        )}
-
-        {show('projects') && projects.length > 0 && (
-          <Section title="Projects">
-            {projects.map(p => (
+        {show('projects') && ownProjects.length > 0 && (
+          <Section title={atJobs.size ? 'Personal Projects' : 'Projects'}>
+            {ownProjects.map(p => (
               <Entry key={p.title} when={p.year} title={p.title}>
-                {/* The private description when there is one (never for confidential projects), else the blurb */}
-                {(projectDescriptions[p.title] ?? p.blurb).split(/\n\s*\n/).map((para, i) => (
-                  <p key={i} className="cvf-para">{para}</p>
-                ))}
-                {(p.tags.length > 0 || p.link || p.github) && (
-                  <div className="cv-project__meta">
-                    {p.tags.map(t => <span key={t} className="cv-pill">{t}</span>)}
-                    {[p.link, p.github].filter(Boolean).map(href => (
-                      <a key={href} className="cv-project__link" href={href}>{bare(href)}</a>
-                    ))}
-                  </div>
-                )}
+                <ProjectDetails p={p} description={projectDescriptions[p.title]} />
               </Entry>
             ))}
             {show('projects-link') && <MoreProjects />}
@@ -183,7 +212,8 @@ const CVFullDocument = forwardRef(function CVFullDocument({
                 <>
                   <Rated label="Programming Languages" items={skills.coding} />
                   <Rated label="Frameworks" items={skills.frameworks} />
-                  <Tags label="Software & Tools" items={skills.software} />
+                  <Tags label="Software" items={skills.software} />
+                  <Tags label="Tools" items={skills.tools} />
                   <Tags label="Design" items={skills.design} />
                 </>
               )}

@@ -68,6 +68,7 @@ def content(session: Session = Depends(get_session)) -> dict[str, Any]:
     rated = _ordered(session, RatedSkill)
     skills: dict[str, list] = {
         "software": [t.name for t in tags if t.category == SkillTagCategory.software],
+        "tools": [t.name for t in tags if t.category == SkillTagCategory.tools],
         "coding": [
             {"name": r.name, "level": r.level.value, "percent": r.percent}
             for r in rated if r.category == RatedSkillCategory.coding

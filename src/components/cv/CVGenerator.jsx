@@ -314,7 +314,6 @@ function Generator({ photoCv, legalName, profile, experience, education, project
         experience={experience}
         activities={activities}
         hasCommits={Boolean(commits)}
-        hasCertifications={education.some(e => e.certification)}
         pages={pages}
         overflow={overflow}
         saveState={saveState}

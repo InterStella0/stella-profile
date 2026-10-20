@@ -22,7 +22,8 @@ class SocialKey(str, enum.Enum):
 
 
 class SkillTagCategory(str, enum.Enum):
-    software = "software"
+    software = "software"  # apps, shown as small badges (PS, AI, QGIS)
+    tools = "tools"  # developer tools and databases (Git, Docker, PostgreSQL)
     design = "design"
     traits = "traits"
 
@@ -122,7 +123,7 @@ class Education(Positioned, Base):
     years: Mapped[str] = mapped_column(String(100))
     org: Mapped[str] = mapped_column(String(300))
     degree: Mapped[str] = mapped_column(String(300))
-    # A professional certification: /cv lists it under Certifications instead of Education.
+    # A professional certification: /cv leads with its name and adds Certifications to the section title.
     certification: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     # Private, in-depth CV only: coursework, results, thesis... (one bullet per line).
     cv_points: Mapped[str | None] = mapped_column(Text)

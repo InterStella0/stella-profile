@@ -101,6 +101,17 @@ export default function Resume() {
           </div>
         </div>
 
+        {skills.tools.length > 0 && (
+          <div className="software-skills-row">
+            <div className="skills__label">Tools</div>
+            <div className="skill-icons">
+              {skills.tools.map((s, i) => (
+                <div key={i} className="skill-icon">{s}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="skills-grid reveal">
           <div>
             <div className="skills__label">Programming Languages</div>

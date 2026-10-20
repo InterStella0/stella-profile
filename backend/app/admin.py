@@ -108,7 +108,8 @@ class EducationAdmin(OrderedView, model=Education):
     column_list = [Education.position, Education.years, Education.org, Education.degree, Education.certification]
     column_labels = {Education.cv_points: "CV bullet points"}
     form_args = {
-        "certification": {"description": "A professional certification: /cv lists it under Certifications"},
+        "certification": {"description": "A professional certification: /cv names the certificate before the issuer "
+                                        "and titles the section Education & Certifications"},
         "cv_points": {"description": "Coursework, results, thesis... one bullet per line, for the in-depth CV on /cv; "
                                     "only admins see it"},
     }
@@ -143,6 +144,10 @@ class SkillTagAdmin(OrderedView, model=SkillTag):
     icon = "fa-solid fa-tags"
     column_default_sort = [("category", False), ("position", False), ("id", False)]
     column_list = [SkillTag.category, SkillTag.position, SkillTag.name]
+    form_args = {
+        "category": {"description": "software: apps, shown as small badges (PS, AI, QGIS); "
+                                    "tools: developer tools and databases (Git, Docker, PostgreSQL)"},
+    }
 
 
 class RatedSkillAdmin(OrderedView, model=RatedSkill):
