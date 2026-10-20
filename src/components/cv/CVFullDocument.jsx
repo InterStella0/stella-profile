@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react';
 import { useContent } from '../../data/ContentContext.jsx';
-import { formatCount } from '../../data/useCommits';
 import { CVHeader, CommitStats, JobProjects, MoreProjects, bare } from './CVDocument';
 
 // The in-depth CV: the resume's header, then one column that runs on over as many
@@ -91,15 +90,18 @@ const CVFullDocument = forwardRef(function CVFullDocument({
         commits={showCommits ? commits : null}
       />
 
-      {showCommits && (
-        <div className="cv-strip">
-          <p className="cv-strip__profile">
-            <b className="cvf-strip__label">Code activity</b>
-            {sources.length > 0 && <> across {sources.join(' and ')}</>}
-          </p>
-          <CommitStats commits={commits} />
-        </div>
-      )}
+      {/* The black strip stays as a slim band when code activity is off */}
+      <div className={`cv-strip${showCommits ? '' : ' cv-strip--bare'}`}>
+        {showCommits && (
+          <>
+            <p className="cv-strip__profile">
+              <b className="cvf-strip__label">Code activity</b>
+              {sources.length > 0 && <> across {sources.join(' and ')}</>}
+            </p>
+            <CommitStats commits={commits} />
+          </>
+        )}
+      </div>
 
       <div className="cvf-body">
         {show('profile') && profile.length > 0 && (
@@ -153,18 +155,7 @@ const CVFullDocument = forwardRef(function CVFullDocument({
         {show('projects') && projects.length > 0 && (
           <Section title="Projects">
             {projects.map(p => (
-              <Entry
-                key={p.title}
-                when={p.year}
-                title={p.title}
-                aside={(p.stars || p.status !== 'active') && (
-                  <>
-                    {p.stars ? <><em aria-hidden="true">✦</em>{formatCount(p.stars)} star{p.stars === 1 ? '' : 's'}</> : null}
-                    {p.stars && p.status !== 'active' ? ' · ' : null}
-                    {p.status !== 'active' ? p.status : null}
-                  </>
-                )}
-              >
+              <Entry key={p.title} when={p.year} title={p.title}>
                 {/* The private description when there is one (never for confidential projects), else the blurb */}
                 {(projectDescriptions[p.title] ?? p.blurb).split(/\n\s*\n/).map((para, i) => (
                   <p key={i} className="cvf-para">{para}</p>

@@ -41,7 +41,7 @@ export const CV_SECTIONS = [
 // Controls beside the sheet; hidden when printing.
 export default function CVPanel({
   options, update, photoCv, upload, onUpload, names, onCustomName, contacts, experience, activities, projects, defaultProjects,
-  highlights, hasCommits, hasCertifications, pages, overflow, moved, onDownload, onReset,
+  highlights, hasCommits, hasCertifications, pages, overflow, moved, saveState, onDownload, onReset,
 }) {
   const isCV = options.format === 'cv';
   // Sections, contact links (`contact:<key>`), activities (`activity:<event>`) and real employers
@@ -118,6 +118,13 @@ export default function CVPanel({
               : '✦ Fits on one A4 page.'}
         </p>
       )}
+      <p className={`cv-panel__saved${saveState === 'error' ? ' cv-panel__saved--error' : ''}`} role="status">
+        {{
+          saved: 'Settings saved for next time.',
+          saving: 'Saving settings…',
+          error: "Couldn't save your settings; they're still in this page's address. Change anything to retry.",
+        }[saveState]}
+      </p>
 
       <fieldset className="cv-panel__group">
         <legend>Name</legend>

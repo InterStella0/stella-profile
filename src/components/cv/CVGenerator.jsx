@@ -9,7 +9,12 @@ import CVPanel from './CVPanel';
 const A4_HEIGHT = (297 / 25.4) * 96;
 const PRINT_MARGIN = (4 / 25.4) * 96;
 
-// ─── Options live in the URL query, so a setup survives reloads and can be bookmarked ─
+// Firefox takes the paper and margins (and so how far it shrinks the sheet) from the default
+// page, not the sheet's named `cv` page; cv.css loads site-wide, so this is only set on /cv.
+const PRINT_PAGE = '@page { size: A4; margin: 0; }';
+
+// ─── Options live in the URL query, so a setup survives reloads and can be bookmarked; ─
+// the backend keeps the latest one too, and /cv opened without a query starts from it
 // format=cv              the in-depth CV instead of the one-page resume
 // hide=profile&hide=contact:discord&hide=activity:Beach clean-up&hide=employer:3
 //                        sections, contact links, activities and real employers (by experience id) turned off
@@ -20,8 +25,8 @@ const PRINT_MARGIN = (4 / 25.4) * 96;
 // name=legal|site        the name in the header; a typed-in name is never put in the URL
 // echo=0                 hide the outlined site name under it
 
-function readOptions() {
-  const q = new URLSearchParams(window.location.search);
+function readOptions(search) {
+  const q = new URLSearchParams(search);
   return {
     format: q.get('format') === 'cv' ? 'cv' : 'resume',
     hide: new Set(q.getAll('hide').filter(Boolean)),
@@ -38,7 +43,7 @@ function readOptions() {
 // The settings both formats share.
 const DEFAULT_OPTIONS = { photo: null, photoY: 50, name: null, echo: true };
 
-function writeOptions({ format, hide, projects, cvHide, cvProjects, photo, photoY, name, echo }) {
+function optionsQuery({ format, hide, projects, cvHide, cvProjects, photo, photoY, name, echo }) {
   const q = new URLSearchParams();
   if (format === 'cv') q.set('format', 'cv');
   hide.forEach(key => q.append('hide', key));
@@ -49,8 +54,53 @@ function writeOptions({ format, hide, projects, cvHide, cvProjects, photo, photo
   if (photoY !== 50) q.set('photoY', photoY);
   if (name && name !== 'custom') q.set('name', name);
   if (!echo) q.set('echo', '0');
-  const search = q.toString();
-  window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+  return q.toString();
+}
+
+function saveOptions(query, keepalive = false) {
+  return fetch('/api/cv/options', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+    keepalive,
+  }).then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); });
+}
+
+// Saves the settings a moment after the last change (or straight away if the tab closes first).
+// Returns 'saved', 'saving' or 'error'.
+function useSavedOptions(query, saved) {
+  const [state, setState] = useState('saved');
+  const sent = useRef(saved ?? ''); // the query last sent (cleared when sending fails)
+  const pending = useRef(null); // a query waiting to be sent
+
+  useEffect(() => {
+    if (query === sent.current) {
+      pending.current = null;
+      setState('saved');
+      return undefined;
+    }
+    pending.current = query;
+    setState('saving');
+    const timer = setTimeout(() => {
+      pending.current = null;
+      sent.current = query;
+      saveOptions(query)
+        .then(() => pending.current === null && sent.current === query && setState('saved'))
+        .catch(() => {
+          sent.current = null;
+          setState('error');
+        });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    const flush = () => pending.current !== null && saveOptions(pending.current, true).catch(() => {});
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, []);
+
+  return state;
 }
 
 // Admin-only: the backend answers 200 (with the private CV fields, the experience list
@@ -99,10 +149,11 @@ export default function CVGenerator() {
   return <Generator {...session} />;
 }
 
-function Generator({ photoCv, legalName, experience, education, projectDescriptions }) {
+function Generator({ photoCv, legalName, experience, education, projectDescriptions, savedOptions }) {
   const { personal, activities, allProjects } = useContent();
   const commits = useCommits();
-  const [options, setOptions] = useState(readOptions);
+  // A query in the URL (a bookmark) wins over the saved settings.
+  const [options, setOptions] = useState(() => readOptions(window.location.search || savedOptions || ''));
   const [upload, setUpload] = useState(null); // { name, url } of a one-off photo
   const [customName, setCustomName] = useState(''); // typed in the panel, kept only in this tab
   const [pages, setPages] = useState(1);
@@ -136,7 +187,11 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
   const effectiveName = nameChoice ?? (legalName ? 'legal' : 'site');
   const name = { legal: legalName, site: personal.name, custom: customName.trim() }[effectiveName];
 
-  useEffect(() => writeOptions(options), [options]);
+  const query = optionsQuery(options);
+  useEffect(() => {
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+  }, [query]);
+  const saveState = useSavedOptions(query, savedOptions);
 
   // Revoke the uploaded photo's object URL when it's replaced or the page goes away.
   useEffect(() => () => upload && URL.revokeObjectURL(upload.url), [upload]);
@@ -241,6 +296,9 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
 
   return (
     <div className="cv-app">
+      <style>{PRINT_PAGE}</style>
+      {/* Printed on every page behind the sheet, so a last page's empty end stays cream (Firefox) */}
+      <div className="cv-print-bg" aria-hidden="true" />
       <CVPanel
         options={{ ...options, hide, projects: chosenProjects, photo: effectivePhoto, name: effectiveName }}
         update={updateShown}
@@ -259,6 +317,7 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
         hasCertifications={education.some(e => e.certification)}
         pages={pages}
         overflow={overflow}
+        saveState={saveState}
         moved={moved}
         onDownload={onDownload}
         onReset={onReset}

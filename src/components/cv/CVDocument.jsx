@@ -194,9 +194,7 @@ function ProjectItem({ p }) {
     <li className="cv-project">
       <div className="cv-project__head">
         <span className="cv-project__title">{p.title}</span>
-        <span className="cv-project__year">
-          {p.stars ? <><em aria-hidden="true">✦</em>{formatCount(p.stars)} · </> : null}{p.year}
-        </span>
+        <span className="cv-project__year">{p.year}</span>
       </div>
       <p className="cv-project__blurb">{p.blurb}</p>
       {(p.tags.length > 0 || p.link || p.github) && (
@@ -298,13 +296,12 @@ const CVDocument = forwardRef(function CVDocument({
           commits={showCommits ? commits : null}
         />
 
-        {/* The hero's black strip, holding the (more formal) profile paragraph and commit stats */}
-        {(showProfile || showCommits) && (
-          <div className="cv-strip">
-            {showProfile && <p className="cv-strip__profile">{profile}</p>}
-            {showCommits && <CommitStats commits={commits} />}
-          </div>
-        )}
+        {/* The hero's black strip, holding the (more formal) profile paragraph and commit stats;
+            a slim band when both are off */}
+        <div className={`cv-strip${showProfile || showCommits ? '' : ' cv-strip--bare'}`}>
+          {showProfile && <p className="cv-strip__profile">{profile}</p>}
+          {showCommits && <CommitStats commits={commits} />}
+        </div>
 
         <div className="cv-body">
           <div className="cv-left">

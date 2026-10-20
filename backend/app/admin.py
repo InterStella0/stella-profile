@@ -83,6 +83,9 @@ class PersonalAdmin(ModelView, model=Personal):
     can_create = False
     can_delete = False
     column_list = [Personal.name, Personal.tagline, Personal.email]
+    # Saved by the /cv page itself.
+    form_excluded_columns = [Personal.cv_options]
+    column_details_exclude_list = [Personal.cv_options]
     column_labels = {Personal.photo_cv: "CV photo (URL from Media)", Personal.legal_name: "Legal name"}
     form_args = {
         "photo_cv": {"description": "A more formal photo for /cv; only admins see it"},
@@ -111,6 +114,9 @@ class ExperienceAdmin(OrderedView, model=Experience):
     name_plural = "Experience"
     icon = "fa-solid fa-briefcase"
     column_list = [Experience.position, Experience.year, Experience.role, Experience.company, Experience.cv_company]
+    # Listed so the projects picker sits with the other CV fields instead of first.
+    form_columns = [Experience.year, Experience.role, Experience.company, Experience.description,
+                    Experience.cv_company, Experience.cv_points, Experience.projects, Experience.position]
     column_labels = {Experience.cv_company: "CV employer", Experience.cv_points: "CV bullet points",
                      Experience.projects: "CV projects"}
     form_args = {
@@ -159,7 +165,10 @@ class ProjectAdmin(OrderedView, model=Project):
                    Project.tags, Project.github_stars, Project.experience]
     column_searchable_list = [Project.title]
     column_sortable_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight]
-    form_excluded_columns = [Project.github_stars, Project.github_stars_updated_at]
+    # Listed so the Employer picker sits with the other CV field instead of first (star counts are fetched).
+    form_columns = [Project.title, Project.year, Project.images, Project.blurb, Project.link, Project.github,
+                    Project.secret, Project.tags, Project.status, Project.highlight, Project.cv_description,
+                    Project.experience, Project.position]
     column_labels = {Project.github_stars: "GitHub stars", Project.highlight: "Set as highlight work",
                      Project.position: "Order", Project.cv_description: "CV description",
                      Project.experience: "Employer"}
@@ -293,7 +302,9 @@ async def _cv_session(request: Request) -> Response:
     if not await admin_auth.authenticate(request):
         return Response(status_code=401)
     with SessionLocal() as session:
-        row = session.execute(select(Personal.photo_cv, Personal.legal_name).order_by(Personal.id)).first()
+        row = session.execute(
+            select(Personal.photo_cv, Personal.legal_name, Personal.cv_options).order_by(Personal.id)
+        ).first()
         jobs = session.scalars(
             select(Experience).options(selectinload(Experience.projects)).order_by(Experience.position, Experience.id)
         ).all()
@@ -323,14 +334,34 @@ async def _cv_session(request: Request) -> Response:
             title: description.strip() for title, description, secret in projects
             if description and description.strip() and not secret
         }
-    photo_cv, legal_name = row or (None, None)
+    photo_cv, legal_name, cv_options = row or (None, None, None)
     return JSONResponse(
         {
             "photoCv": photo_cv or None, "legalName": legal_name or None,
             "experience": experience, "education": education, "projectDescriptions": project_descriptions,
+            "savedOptions": cv_options,
         },
         headers={"Cache-Control": "no-store"},
     )
+
+
+# The generator's settings are its URL query string; anything near this long isn't one.
+MAX_CV_OPTIONS = 20_000
+
+
+async def _cv_save_options(request: Request) -> Response:
+    """`PUT /api/cv/options` with {"query": "..."}: keeps the /cv settings for next time."""
+    if not await admin_auth.authenticate(request):
+        return Response(status_code=401)
+    try:
+        query = (await request.json()).get("query")
+    except (ValueError, AttributeError):
+        query = None
+    if not isinstance(query, str) or len(query) > MAX_CV_OPTIONS:
+        return Response(status_code=422)
+    with SessionLocal() as session, session.begin():
+        session.execute(update(Personal).values(cv_options=query))
+    return Response(status_code=204)
 
 
 def _points(text: str | None) -> list[str]:
@@ -339,8 +370,9 @@ def _points(text: str | None) -> list[str]:
 
 # Mounted at /api/cv: `GET /api/cv/session` is 200 for a logged-in admin, 401 otherwise.
 # nginx uses it to gate /cv, and the page reads the private CV fields (photo, legal name, employers) from it.
+# `PUT /api/cv/options` saves the page's settings.
 session_check_app = Starlette(
-    routes=[Route("/session", _cv_session)],
+    routes=[Route("/session", _cv_session), Route("/options", _cv_save_options, methods=["PUT"])],
     middleware=[Middleware(SessionMiddleware, secret_key=SESSION_SECRET, **SESSION_OPTIONS)],
 )
 
