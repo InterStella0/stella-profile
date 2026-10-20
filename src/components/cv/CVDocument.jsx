@@ -53,6 +53,12 @@ export function cvContacts(personal) {
   ].filter(Boolean);
 }
 
+// Under a job: the projects linked to it in the admin, by title.
+export function JobProjects({ titles, className = '' }) {
+  if (!titles?.length) return null;
+  return <p className={`cv-job-projects ${className}`}><b>Projects:</b> {titles.join(' · ')}</p>;
+}
+
 // Under the projects: the rest are on the portfolio's /projects page.
 export function MoreProjects() {
   const href = `${siteUrl().replace(/\/$/, '')}/projects`;
@@ -183,9 +189,33 @@ export function CVHeader({ contacts, photoSrc, photoY, name, echo, commits }) {
   );
 }
 
+function ProjectItem({ p }) {
+  return (
+    <li className="cv-project">
+      <div className="cv-project__head">
+        <span className="cv-project__title">{p.title}</span>
+        <span className="cv-project__year">
+          {p.stars ? <><em aria-hidden="true">✦</em>{formatCount(p.stars)} · </> : null}{p.year}
+        </span>
+      </div>
+      <p className="cv-project__blurb">{p.blurb}</p>
+      {(p.tags.length > 0 || p.link || p.github) && (
+        <div className="cv-project__meta">
+          {p.tags.map(t => <span key={t} className="cv-pill">{t}</span>)}
+          {[p.link, p.github].filter(Boolean).map(href => (
+            <a key={href} className="cv-project__link" href={href}>{bare(href)}</a>
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
 // The one-page resume: a compact two-column A4 sheet. `show(key)` says whether a section is turned on.
+// `split` is how many projects fit on the first page; the rest get a "More Projects" page of their
+// own (null: they all fit). The generator works it out from the hidden full-length copy of the left column.
 const CVDocument = forwardRef(function CVDocument({
-  show, contacts, experience, activities, projects, photoSrc, photoY, name, echo, commits,
+  show, contacts, experience, activities, projects, split = null, photoSrc, photoY, name, echo, commits,
 }, ref) {
   const { personal, education, skills, languages, hobbies } = useContent();
   const profile = personal.longBio.split(/\n\s*\n/)[0];
@@ -201,153 +231,183 @@ const CVDocument = forwardRef(function CVDocument({
   const showCommits = show('commits') && Boolean(commits);
   const schooling = education.filter(e => !e.certification);
   const certifications = education.filter(e => e.certification);
+  const showProjects = show('projects') && projects.length > 0;
+  const moreProjects = showProjects && split != null ? projects.slice(split) : [];
 
   const hasSkills = [skills.software, skills.coding, skills.frameworks, skills.design].some(list => list.length);
 
-  return (
-    <article className="cv-sheet" ref={ref}>
-      <CVHeader
-        contacts={contacts}
-        photoSrc={photoSrc}
-        photoY={photoY}
-        name={name}
-        echo={echo}
-        commits={showCommits ? commits : null}
-      />
+  // The left column with the given projects; the link to the rest closes the projects when it all fits.
+  const left = (list, moreLink) => (
+    <>
+      {hasExperience && (
+        <section className="cv-block cv-exp">
+          <h2 className="cv-title">Experience</h2>
+          <Timeline items={experience.map(e => ({
+            when: e.year,
+            // The site's company reads "at [Redacted]"; the CV's employer is just the name.
+            title: e.employer ? `${e.role} at ${e.employer}` : e.company ? `${e.role} ${e.company}` : e.role,
+            desc: (e.points.length > 0 || e.desc || e.projects.length > 0) && (
+              <>
+                {e.points.length > 0
+                  ? <ul className="cv-points">{e.points.map((point, i) => <li key={i}>{point}</li>)}</ul>
+                  : e.desc}
+                <JobProjects titles={e.projects} />
+              </>
+            ),
+          }))} />
+          {traits}
+        </section>
+      )}
+      {!hasExperience && traits && <section className="cv-block">{traits}</section>}
 
-      {/* The hero's black strip, holding the (more formal) profile paragraph and commit stats */}
-      {(showProfile || showCommits) && (
-        <div className="cv-strip">
-          {showProfile && <p className="cv-strip__profile">{profile}</p>}
-          {showCommits && <CommitStats commits={commits} />}
-        </div>
+      {show('education') && schooling.length > 0 && (
+        <section className="cv-block">
+          <h2 className="cv-title">Education</h2>
+          <Timeline items={schooling.map(e => ({ when: e.years, title: e.org, desc: e.degree }))} />
+        </section>
       )}
 
-      <div className="cv-body">
-        <div className="cv-left">
-          {hasExperience && (
-            <section className="cv-block cv-exp">
-              <h2 className="cv-title">Experience</h2>
-              <Timeline items={experience.map(e => ({
-                when: e.year,
-                // The site's company reads "at [Redacted]"; the CV's employer is just the name.
-                title: e.employer ? `${e.role} at ${e.employer}` : e.company ? `${e.role} ${e.company}` : e.role,
-                desc: e.points.length > 0
-                  ? <ul className="cv-points">{e.points.map((point, i) => <li key={i}>{point}</li>)}</ul>
-                  : e.desc,
-              }))} />
-              {traits}
-            </section>
-          )}
-          {!hasExperience && traits && <section className="cv-block">{traits}</section>}
+      {show('certifications') && certifications.length > 0 && (
+        <section className="cv-block">
+          <h2 className="cv-title">Certifications</h2>
+          <Timeline items={certifications.map(e => ({ when: e.years, title: e.degree, desc: e.org }))} />
+        </section>
+      )}
 
-          {show('education') && schooling.length > 0 && (
-            <section className="cv-block">
-              <h2 className="cv-title">Education</h2>
-              <Timeline items={schooling.map(e => ({ when: e.years, title: e.org, desc: e.degree }))} />
-            </section>
-          )}
+      {showProjects && list.length > 0 && (
+        <section className="cv-block">
+          <h2 className="cv-title">Projects</h2>
+          <ul className="cv-projects">
+            {list.map(p => <ProjectItem key={p.title} p={p} />)}
+          </ul>
+          {moreLink && show('projects-link') && <MoreProjects />}
+        </section>
+      )}
+    </>
+  );
 
-          {show('certifications') && certifications.length > 0 && (
-            <section className="cv-block">
-              <h2 className="cv-title">Certifications</h2>
-              <Timeline items={certifications.map(e => ({ when: e.years, title: e.degree, desc: e.org }))} />
-            </section>
-          )}
+  return (
+    <article className={`cv-sheet${moreProjects.length ? ' cv-sheet--paged' : ''}`} ref={ref}>
+      <div className="cv-page">
+        <CVHeader
+          contacts={contacts}
+          photoSrc={photoSrc}
+          photoY={photoY}
+          name={name}
+          echo={echo}
+          commits={showCommits ? commits : null}
+        />
 
-          {show('projects') && projects.length > 0 && (
-            <section className="cv-block">
-              <h2 className="cv-title">Projects</h2>
-              <ul className="cv-projects">
-                {projects.map(p => (
-                  <li key={p.title} className="cv-project">
-                    <div className="cv-project__head">
-                      <span className="cv-project__title">{p.title}</span>
-                      <span className="cv-project__year">
-                        {p.stars ? <><em aria-hidden="true">✦</em>{formatCount(p.stars)} · </> : null}{p.year}
-                      </span>
-                    </div>
-                    <p className="cv-project__blurb">{p.blurb}</p>
-                    {(p.tags.length > 0 || p.link || p.github) && (
-                      <div className="cv-project__meta">
-                        {p.tags.map(t => <span key={t} className="cv-pill">{t}</span>)}
-                        {[p.link, p.github].filter(Boolean).map(href => (
-                          <a key={href} className="cv-project__link" href={href}>{bare(href)}</a>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {show('projects-link') && <MoreProjects />}
-            </section>
-          )}
-        </div>
+        {/* The hero's black strip, holding the (more formal) profile paragraph and commit stats */}
+        {(showProfile || showCommits) && (
+          <div className="cv-strip">
+            {showProfile && <p className="cv-strip__profile">{profile}</p>}
+            {showCommits && <CommitStats commits={commits} />}
+          </div>
+        )}
 
-        <div className="cv-right">
-          <div className="cv-watermark" aria-hidden="true">SKILLS<br />SKILLS</div>
+        <div className="cv-body">
+          <div className="cv-left">
+            {left(moreProjects.length ? projects.slice(0, split) : projects, moreProjects.length === 0)}
+          </div>
 
-          {show('skills') && hasSkills && (
-            <section className="cv-block">
-              <h2 className="cv-title">Skills</h2>
-              {skills.software.length > 0 && (
-                <div className="cv-software">
-                  <div className="cv-label">Software Skills</div>
-                  {skills.software.map(s => <span key={s} className="cv-software__item">{s}</span>)}
-                </div>
-              )}
-              <div className="cv-bars-grid">
-                <SkillBars label="Programming Languages" items={skills.coding} />
-                <SkillBars label="Frameworks" items={skills.frameworks} />
-              </div>
-              {skills.design.length > 0 && (
-                <div className="cv-pills">
-                  {skills.design.map(d => <span key={d} className="cv-pill cv-pill--cream">{d}</span>)}
-                </div>
-              )}
-            </section>
+          {/* Every chosen project in the left column, unseen and never printed: measured to find the split */}
+          {showProjects && (
+            <div className="cv-left cv-left--ghost" aria-hidden="true">{left(projects, true)}</div>
           )}
 
-          {show('languages') && languages.length > 0 && (
-            <section className="cv-block">
-              <h3 className="cv-subtitle">Language</h3>
-              <div className="cv-langs">
-                {languages.map(l => (
-                  <div key={l.name}>
-                    <div className="cv-langs__name">{l.name}</div>
-                    <div className="cv-langs__level">{l.level}</div>
+          <div className="cv-right">
+            <div className="cv-watermark" aria-hidden="true">SKILLS<br />SKILLS</div>
+
+            {show('skills') && hasSkills && (
+              <section className="cv-block">
+                <h2 className="cv-title">Skills</h2>
+                {skills.software.length > 0 && (
+                  <div className="cv-software">
+                    <div className="cv-label">Software Skills</div>
+                    {skills.software.map(s => <span key={s} className="cv-software__item">{s}</span>)}
                   </div>
-                ))}
-              </div>
-            </section>
-          )}
+                )}
+                <div className="cv-bars-grid">
+                  <SkillBars label="Programming Languages" items={skills.coding} />
+                  <SkillBars label="Frameworks" items={skills.frameworks} />
+                </div>
+                {skills.design.length > 0 && (
+                  <div className="cv-pills">
+                    {skills.design.map(d => <span key={d} className="cv-pill cv-pill--cream">{d}</span>)}
+                  </div>
+                )}
+              </section>
+            )}
 
-          {show('hobbies') && hobbies.length > 0 && (
-            <section className="cv-block">
-              <h3 className="cv-subtitle">Hobbies &amp; Interests</h3>
-              <div className="cv-hobbies">
-                {hobbies.map(h => {
-                  const Icon = hobbyIcons[h.icon];
-                  return (
-                    <div key={h.label} className="cv-hobby">
-                      <div className="cv-hobby__icon">{Icon && <Icon size={14} strokeWidth={1.5} />}</div>
-                      <div className="cv-hobby__label">{h.label}</div>
+            {show('languages') && languages.length > 0 && (
+              <section className="cv-block">
+                <h3 className="cv-subtitle">Language</h3>
+                <div className="cv-langs">
+                  {languages.map(l => (
+                    <div key={l.name}>
+                      <div className="cv-langs__name">{l.name}</div>
+                      <div className="cv-langs__level">{l.level}</div>
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+                  ))}
+                </div>
+              </section>
+            )}
 
-          {show('activities') && activities.length > 0 && (
-            <section className="cv-block">
-              <h3 className="cv-subtitle">Activities</h3>
-              <Timeline items={activities.map(a => ({ when: a.year, title: a.event, desc: a.role }))} />
-            </section>
-          )}
+            {show('hobbies') && hobbies.length > 0 && (
+              <section className="cv-block">
+                <h3 className="cv-subtitle">Hobbies &amp; Interests</h3>
+                <div className="cv-hobbies">
+                  {hobbies.map(h => {
+                    const Icon = hobbyIcons[h.icon];
+                    return (
+                      <div key={h.label} className="cv-hobby">
+                        <div className="cv-hobby__icon">{Icon && <Icon size={14} strokeWidth={1.5} />}</div>
+                        <div className="cv-hobby__label">{h.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
+            {show('activities') && activities.length > 0 && (
+              <section className="cv-block">
+                <h3 className="cv-subtitle">Activities</h3>
+                <Timeline items={activities.map(a => ({ when: a.year, title: a.event, desc: a.role }))} />
+              </section>
+            )}
+
+          </div>
         </div>
       </div>
+
+      {/* Projects that don't fit on the first page: a page of their own under a slim header band */}
+      {moreProjects.length > 0 && (
+        <section className="cv-page cv-page--more">
+          <div className="cv-band">
+            {STARS.slice(0, 6).map(([x, , size, kind], i) => (
+              <em
+                key={i}
+                className={`cv-star ${kind.split(' ').map(k => `cv-star--${k}`).join(' ')}`}
+                style={{ left: x, top: i % 2 ? '68%' : '22%', '--size': `${size * 0.7}pt` }}
+                aria-hidden="true"
+              >
+                {kind.startsWith('glyph') ? '✦' : null}
+              </em>
+            ))}
+            <span className="cv-band__name">{name.toUpperCase()}</span>
+            <span className="cv-band__tagline">{personal.tagline}</span>
+          </div>
+          <div className="cv-more-body">
+            <h2 className="cv-title">More Projects</h2>
+            <ul className="cv-projects cv-projects--grid">
+              {moreProjects.map(p => <ProjectItem key={p.title} p={p} />)}
+            </ul>
+            {show('projects-link') && <MoreProjects />}
+          </div>
+        </section>
+      )}
     </article>
   );
 });

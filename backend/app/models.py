@@ -4,8 +4,8 @@ from decimal import Decimal
 
 from fastapi_storages import FileSystemStorage
 from fastapi_storages.integrations.sqlalchemy import FileType
-from sqlalchemy import ARRAY, Boolean, DateTime, Enum, Float, Integer, Numeric, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ARRAY, Boolean, DateTime, Enum, Float, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.config import UPLOAD_DIR
 from app.db import Base
@@ -138,9 +138,14 @@ class Experience(Positioned, Base):
     # Private, /cv only: the real employer name and achievement bullets (one per line).
     cv_company: Mapped[str | None] = mapped_column(String(200))
     cv_points: Mapped[str | None] = mapped_column(Text)
+    # The projects made at this job (set on either side in the admin), listed under it on /cv.
+    projects: Mapped[list["Project"]] = relationship(
+        back_populates="experience", order_by=lambda: [Project.year.desc(), Project.position, Project.id]
+    )
 
     def __str__(self) -> str:
-        return self.role
+        # Names the job in the admin's project form, where several can share a role.
+        return " · ".join(filter(None, [self.role, self.cv_company or self.company, self.year]))
 
 
 class Activity(Positioned, Base):
@@ -220,6 +225,9 @@ class Project(Positioned, Base):
     highlight: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     # Private, in-depth CV only: the real description in place of the blurb (never used when secret).
     cv_description: Mapped[str | None] = mapped_column(Text)
+    # Private, /cv only: the job this was made at; empty for a personal project.
+    experience_id: Mapped[int | None] = mapped_column(ForeignKey("experience.id", ondelete="SET NULL"), index=True)
+    experience: Mapped[Experience | None] = relationship(back_populates="projects")
     # Filled in by app.github from the `github` repo link.
     github_stars: Mapped[int | None] = mapped_column(Integer)
     github_stars_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

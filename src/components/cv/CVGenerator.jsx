@@ -106,6 +106,8 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
   const [upload, setUpload] = useState(null); // { name, url } of a one-off photo
   const [customName, setCustomName] = useState(''); // typed in the panel, kept only in this tab
   const [pages, setPages] = useState(1);
+  const [overflow, setOverflow] = useState(false); // the resume's first page itself runs over
+  const [split, setSplit] = useState(null); // projects kept on the resume's first page (null: all)
   const sheetRef = useRef(null);
 
   // The panel edits the shown format's sections and projects; name and photo are shared.
@@ -159,9 +161,23 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
       setPages(over <= 0 ? 1 : 1 + Math.ceil(over / (A4_HEIGHT - padTop - padBottom)));
       return;
     }
-    const ends = [...sheet.querySelectorAll('.cv-left, .cv-right')]
+    // The resume keeps as many projects on page one as fit (measured in the hidden full-length
+    // copy of the left column); the rest move to a "More Projects" page.
+    const fits = (el, col) => el.getBoundingClientRect().bottom - top + PRINT_MARGIN
+      + parseFloat(getComputedStyle(col).paddingBottom) <= A4_HEIGHT;
+    const ghost = sheet.querySelector('.cv-left--ghost');
+    if (ghost) {
+      const kept = [...ghost.querySelectorAll('.cv-project')].findIndex(item => !fits(item, ghost));
+      setSplit(ghost.lastElementChild && fits(ghost.lastElementChild, ghost) ? null : kept === -1 ? null : kept);
+    }
+    const ends = [...sheet.querySelectorAll('.cv-page:first-child :is(.cv-left:not(.cv-left--ghost), .cv-right)')]
       .map(col => end(col) + parseFloat(getComputedStyle(col).paddingBottom));
-    setPages(Math.max(1, Math.ceil(Math.max(...ends) / A4_HEIGHT)));
+    const first = Math.max(1, Math.ceil(Math.max(...ends) / A4_HEIGHT));
+    const more = sheet.querySelector('.cv-more-body');
+    const page = more?.parentElement.getBoundingClientRect().top - top;
+    const rest = more ? Math.max(1, Math.ceil((end(more) - page + parseFloat(getComputedStyle(more).paddingBottom)) / A4_HEIGHT)) : 0;
+    setPages(first + rest);
+    setOverflow(first > 1);
   };
 
   // Re-measure after every render (options changed) and whenever the photo or fonts load.
@@ -219,6 +235,9 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
   // A job turned off in the panel keeps its public (redacted) company instead of the real employer.
   const jobs = experience.map(e => (show(`employer:${e.id}`) ? e : { ...e, employer: null }));
   const Document = isCV ? CVFullDocument : CVDocument;
+  const sheetProjects = (chosenProjects ?? defaultProjects).map(t => byTitle.get(t)).filter(Boolean);
+  // Projects the resume moves onto its own "More Projects" page.
+  const moved = !isCV && show('projects') && split != null ? Math.max(0, sheetProjects.length - split) : 0;
 
   return (
     <div className="cv-app">
@@ -239,6 +258,8 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
         hasCommits={Boolean(commits)}
         hasCertifications={education.some(e => e.certification)}
         pages={pages}
+        overflow={overflow}
+        moved={moved}
         onDownload={onDownload}
         onReset={onReset}
       />
@@ -250,7 +271,8 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
           experience={jobs}
           education={education}
           activities={activities.filter(a => show(`activity:${a.event}`))}
-          projects={(chosenProjects ?? defaultProjects).map(t => byTitle.get(t)).filter(Boolean)}
+          projects={sheetProjects}
+          split={split}
           projectDescriptions={projectDescriptions}
           photoSrc={photoSrc}
           photoY={options.photoY}

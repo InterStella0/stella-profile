@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from markupsafe import Markup, escape
 from sqladmin import Admin, BaseView, ModelView, action, expose
 from sqlalchemy import select, update
+from sqlalchemy.orm import selectinload
 from sqladmin.authentication import AuthenticationBackend
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
@@ -110,10 +111,14 @@ class ExperienceAdmin(OrderedView, model=Experience):
     name_plural = "Experience"
     icon = "fa-solid fa-briefcase"
     column_list = [Experience.position, Experience.year, Experience.role, Experience.company, Experience.cv_company]
-    column_labels = {Experience.cv_company: "CV employer", Experience.cv_points: "CV bullet points"}
+    column_labels = {Experience.cv_company: "CV employer", Experience.cv_points: "CV bullet points",
+                     Experience.projects: "CV projects"}
     form_args = {
         "cv_company": {"description": "The real employer name for /cv; only admins see it (the site keeps using Company)"},
-        "cv_points": {"description": "What you did there, one bullet per line, for /cv; only admins see it"},
+        "cv_points": {"description": "Optional: what you did there, one bullet per line, printed under the job on /cv; "
+                                     "only admins see it"},
+        "projects": {"description": "The projects you made at this job, listed under it on /cv (also settable "
+                                    "from each project's Employer field); only admins see it"},
     }
 
 
@@ -151,12 +156,13 @@ class HobbyAdmin(OrderedView, model=Hobby):
 class ProjectAdmin(OrderedView, model=Project):
     icon = "fa-solid fa-diagram-project"
     column_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight, Project.secret,
-                   Project.tags, Project.github_stars]
+                   Project.tags, Project.github_stars, Project.experience]
     column_searchable_list = [Project.title]
     column_sortable_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight]
     form_excluded_columns = [Project.github_stars, Project.github_stars_updated_at]
     column_labels = {Project.github_stars: "GitHub stars", Project.highlight: "Set as highlight work",
-                     Project.position: "Order", Project.cv_description: "CV description"}
+                     Project.position: "Order", Project.cv_description: "CV description",
+                     Project.experience: "Employer"}
     form_args = {
         "highlight": {"description": "Show on the front page's \"Highlight of my work\" section "
                                      "(every project is listed on /projects)"},
@@ -169,6 +175,8 @@ class ProjectAdmin(OrderedView, model=Project):
         "cv_description": {"description": "The real description for the in-depth CV on /cv (blank lines split "
                                          "paragraphs); only admins see it. Empty, or the project is confidential: "
                                          "the CV uses Blurb"},
+        "experience": {"description": "The job this was made at: /cv lists it under that experience. "
+                                       "Empty for a personal project; only admins see it"},
     }
 
     async def after_model_change(self, data: dict, model: Project, is_created: bool, request: Request) -> None:
@@ -286,7 +294,9 @@ async def _cv_session(request: Request) -> Response:
         return Response(status_code=401)
     with SessionLocal() as session:
         row = session.execute(select(Personal.photo_cv, Personal.legal_name).order_by(Personal.id)).first()
-        jobs = session.scalars(select(Experience).order_by(Experience.position, Experience.id)).all()
+        jobs = session.scalars(
+            select(Experience).options(selectinload(Experience.projects)).order_by(Experience.position, Experience.id)
+        ).all()
         schools = session.scalars(select(Education).order_by(Education.position, Education.id)).all()
         projects = session.execute(select(Project.title, Project.cv_description, Project.secret)).all()
         # /api/content's experience and education lists plus the private /cv details, so the sheet renders from these.
@@ -295,6 +305,8 @@ async def _cv_session(request: Request) -> Response:
                 "id": e.id, "year": e.year, "role": e.role, "company": e.company, "desc": e.description,
                 "employer": e.cv_company or None,
                 "points": _points(e.cv_points),
+                # Titles, as the page matches projects from /api/content.
+                "projects": [p.title for p in e.projects],
             }
             for e in jobs
         ]

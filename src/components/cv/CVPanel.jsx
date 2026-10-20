@@ -41,7 +41,7 @@ export const CV_SECTIONS = [
 // Controls beside the sheet; hidden when printing.
 export default function CVPanel({
   options, update, photoCv, upload, onUpload, names, onCustomName, contacts, experience, activities, projects, defaultProjects,
-  highlights, hasCommits, hasCertifications, pages, onDownload, onReset,
+  highlights, hasCommits, hasCertifications, pages, overflow, moved, onDownload, onReset,
 }) {
   const isCV = options.format === 'cv';
   // Sections, contact links (`contact:<key>`), activities (`activity:<event>`) and real employers
@@ -109,10 +109,13 @@ export default function CVPanel({
       {isCV ? (
         <p className="cv-panel__pages">✦ About {pages} A4 page{pages > 1 ? 's' : ''}.</p>
       ) : (
-        <p className={`cv-panel__pages${pages > 1 ? ' cv-panel__pages--over' : ''}`}>
-          {pages > 1
-            ? `Spills onto ${pages} pages: hide a section or a few projects to fit one.`
-            : '✦ Fits on one A4 page.'}
+        // Projects moved onto a "More Projects" page are fine; the first page itself running over isn't.
+        <p className={`cv-panel__pages${overflow ? ' cv-panel__pages--over' : ''}`}>
+          {overflow
+            ? `The first page spills over (${pages} pages): hide a section to fit it.`
+            : moved > 0
+              ? `✦ ${pages} A4 pages: ${moved} project${moved > 1 ? 's' : ''} continue on a More Projects page. Untick a few to fit one.`
+              : '✦ Fits on one A4 page.'}
         </p>
       )}
 
