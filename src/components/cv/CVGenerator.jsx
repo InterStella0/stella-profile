@@ -149,7 +149,7 @@ export default function CVGenerator() {
   return <Generator {...session} />;
 }
 
-function Generator({ photoCv, legalName, experience, education, projectDescriptions, savedOptions }) {
+function Generator({ photoCv, legalName, profile, experience, education, projectDescriptions, savedOptions }) {
   const { personal, activities, allProjects } = useContent();
   const commits = useCommits();
   // A query in the URL (a bookmark) wins over the saved settings.
@@ -333,6 +333,7 @@ function Generator({ photoCv, legalName, experience, education, projectDescripti
           projects={sheetProjects}
           split={split}
           projectDescriptions={projectDescriptions}
+          profile={profile ?? personal.longBio}
           photoSrc={photoSrc}
           photoY={options.photoY}
           name={name}

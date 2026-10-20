@@ -67,10 +67,12 @@ function Tags({ label, items }) {
 }
 
 const CVFullDocument = forwardRef(function CVFullDocument({
-  show, contacts, experience, education, activities, projects, projectDescriptions, photoSrc, photoY, name, echo, commits,
+  show, contacts, experience, education, activities, projects, projectDescriptions, profile: profileText, photoSrc, photoY,
+  name, echo, commits,
 }, ref) {
   const { personal, skills, languages, hobbies } = useContent();
-  const profile = personal.longBio.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  // The CV profile (or the site's long bio), a paragraph per blank-line-separated block.
+  const profile = profileText.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
   const details = [['Date of birth', personal.dob], ['Nationality', personal.nationality]].filter(([, value]) => value);
   const showCommits = show('commits') && Boolean(commits);
   const schooling = education.filter(e => !e.certification);

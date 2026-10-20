@@ -213,10 +213,12 @@ function ProjectItem({ p }) {
 // `split` is how many projects fit on the first page; the rest get a "More Projects" page of their
 // own (null: they all fit). The generator works it out from the hidden full-length copy of the left column.
 const CVDocument = forwardRef(function CVDocument({
-  show, contacts, experience, activities, projects, split = null, photoSrc, photoY, name, echo, commits,
+  show, contacts, experience, activities, projects, split = null, profile: profileText, photoSrc, photoY, name, echo,
+  commits,
 }, ref) {
   const { personal, education, skills, languages, hobbies } = useContent();
-  const profile = personal.longBio.split(/\n\s*\n/)[0];
+  // The CV profile (or the site's long bio): the resume has room for its first paragraph.
+  const profile = profileText.split(/\n\s*\n/)[0].trim();
 
   // Traits sit under the experience timeline, as on the site (or alone if Experience is off).
   const traits = show('traits') && skills.traits.length > 0 && (
