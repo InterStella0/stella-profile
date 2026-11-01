@@ -5,11 +5,14 @@ import secrets
 from datetime import timezone
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from markupsafe import Markup, escape
 from sqladmin import Admin, BaseView, ModelView, action, expose
-from sqlalchemy import select, update
-from sqlalchemy.orm import selectinload
 from sqladmin.authentication import AuthenticationBackend
+from sqladmin.editors import FieldMedia
+from sqladmin.fields import Select2TagsField
+from sqlalchemy import func, select, update
+from sqlalchemy.orm import selectinload
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,6 +24,14 @@ from app import github
 from app.supporters import invalidate_cache
 from app.config import ADMIN_PASSWORD, ADMIN_USERNAME, SECRET_KEY
 from app.db import SessionLocal, engine
+from app.image_gallery import (
+    ADMIN_BASE_URL,
+    ASSETS_DIR,
+    ASSETS_URL,
+    ImageGalleryField,
+    ProjectImagesView,
+    asset_url,
+)
 from app.models import (
     Activity,
     Decoration,
@@ -170,6 +181,29 @@ class HobbyAdmin(OrderedView, model=Hobby):
     column_list = [Hobby.position, Hobby.icon, Hobby.label]
 
 
+class ProjectTagsField(Select2TagsField):
+    """sqladmin's tags box, with every tag already used on a project offered as a suggestion."""
+
+    media = FieldMedia(js=[asset_url("tag-suggest.js")])
+
+    def iter_choices(self):
+        current = [tag for tag in self.data or [] if tag]
+        with SessionLocal() as session:
+            used = session.scalars(select(func.unnest(Project.tags)).distinct()).all()
+        others = sorted({tag for tag in used if tag} - set(current), key=str.casefold)
+        # This project's tags first, in their saved order (Select2 keeps the order of the options).
+        for tag in current:
+            yield tag, tag, True, {}
+        for tag in others:
+            yield tag, tag, False, {}
+
+    def __call__(self, **kwargs) -> Markup:
+        # The selected tags are already options above; sqladmin's script would add them a second time.
+        kwargs.setdefault("data-json", "[]")
+        kwargs.setdefault("data-tag-suggest", "")
+        return super().__call__(**kwargs)
+
+
 class ProjectAdmin(OrderedView, model=Project):
     icon = "fa-solid fa-diagram-project"
     column_list = [Project.position, Project.title, Project.year, Project.status, Project.highlight, Project.secret,
@@ -187,7 +221,9 @@ class ProjectAdmin(OrderedView, model=Project):
         "highlight": {"description": "Show on the front page's \"Highlight of my work\" section "
                                      "(every project is listed on /projects)"},
         "position": {"description": "Order within the front page highlights; /projects sorts on its own"},
-        "images": {"description": "Image paths or URLs, e.g. /projects/foo.png or an uploaded /uploads/... URL"},
+        "images": {"description": "Drop, paste or choose images/GIFs to upload them; drag the thumbnails (or use "
+                              "the arrows) to reorder. The first one is the card's cover"},
+        "tags": {"description": "Start typing to pick a tag other projects use, or type a new one and press Enter"},
         "secret": {"description": "Confidential: hidden from the featured list and no Visit link"},
         "link": {"description": "The live site or demo (the Visit button)"},
         "github": {"label": "GitHub",
@@ -198,6 +234,7 @@ class ProjectAdmin(OrderedView, model=Project):
         "experience": {"description": "The job this was made at: /cv lists it under that experience. "
                                        "Empty for a personal project; only admins see it"},
     }
+    form_overrides = {"images": ImageGalleryField, "tags": ProjectTagsField}
 
     async def after_model_change(self, data: dict, model: Project, is_created: bool, request: Request) -> None:
         # Pick up the star count for a new/changed link without waiting for the next cycle.
@@ -391,17 +428,19 @@ session_check_app = Starlette(
 
 
 def setup_admin(app: FastAPI) -> Admin:
+    # Mounted before the admin so its /admin mount doesn't swallow these (the gallery field's JS/CSS).
+    app.mount(ASSETS_URL, StaticFiles(directory=ASSETS_DIR), name="admin-assets")
     admin = Admin(
         app,
         engine,
-        base_url="/admin",
+        base_url=ADMIN_BASE_URL,
         title="stella-profile admin",
         authentication_backend=admin_auth,
     )
     for view in (
         PersonalAdmin, SocialLinkAdmin, EducationAdmin, ExperienceAdmin, ActivityAdmin, SkillTagAdmin,
         RatedSkillAdmin, LanguageAdmin, HobbyAdmin, ProjectAdmin, DecorationAdmin, SupporterAdmin, MediaAdmin,
-        CVView,
+        CVView, ProjectImagesView,
     ):
         admin.add_view(view)
     return admin

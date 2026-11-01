@@ -1,0 +1,190 @@
+/* The admin's image gallery field (app/image_gallery.py). Colours fall back for older Tabler builds. */
+
+.img-gallery {
+  --ig-border: var(--tblr-border-color, #dce1e7);
+  --ig-muted: var(--tblr-secondary, #667382);
+  --ig-primary: var(--tblr-primary, #066fd1);
+  --ig-danger: var(--tblr-danger, #d63939);
+  --ig-surface: var(--tblr-bg-surface-secondary, #f6f8fb);
+}
+
+.img-gallery__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+.img-gallery__list:empty {
+  display: none;
+}
+
+.img-gallery__item {
+  position: relative;
+  width: 160px;
+  overflow: hidden;
+  border: 1px solid var(--ig-border);
+  border-radius: 6px;
+  background: var(--ig-surface);
+  cursor: grab;
+}
+.img-gallery__item img {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: contain;
+}
+.img-gallery__name {
+  padding: 0.25rem 0.5rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  color: var(--ig-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The site uses the first image as the card thumbnail. */
+.img-gallery__cover {
+  display: none;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--ig-primary);
+  color: #fff;
+  font-size: 0.7rem;
+}
+.img-gallery__item:first-child .img-gallery__cover {
+  display: block;
+}
+
+.img-gallery__actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.img-gallery__item:hover .img-gallery__actions,
+.img-gallery__item:focus-within .img-gallery__actions {
+  opacity: 1;
+}
+.img-gallery__actions button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.img-gallery__actions button[data-act="remove"]:hover {
+  background: var(--ig-danger);
+}
+.img-gallery__item:first-child [data-act="left"],
+.img-gallery__item:last-child [data-act="right"] {
+  visibility: hidden;
+}
+
+.img-gallery__item.is-dragging {
+  opacity: 0.4;
+}
+.img-gallery__item.is-uploading {
+  cursor: progress;
+}
+.img-gallery__item.is-uploading img {
+  opacity: 0.45;
+}
+.img-gallery__item.is-uploading .img-gallery__actions {
+  display: none;
+}
+.img-gallery__item.is-broken img {
+  opacity: 0.15;
+}
+.img-gallery__item.is-broken .img-gallery__name {
+  color: var(--ig-danger);
+}
+.img-gallery__item.is-broken .img-gallery__name::before {
+  content: "Not found: ";
+}
+
+.img-gallery__drop {
+  padding: 1rem;
+  border: 2px dashed var(--ig-border);
+  border-radius: 6px;
+  color: var(--ig-muted);
+  text-align: center;
+}
+.img-gallery.is-dropping .img-gallery__drop {
+  border-color: var(--ig-primary);
+  background: rgba(6, 111, 209, 0.06);
+  color: var(--ig-primary);
+}
+
+.img-gallery__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.img-gallery__url {
+  width: auto;
+  flex: 0 1 22rem;
+}
+
+.img-gallery__library {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.5rem;
+  max-height: 320px;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--ig-border);
+  border-radius: 6px;
+  color: var(--ig-muted);
+}
+.img-gallery__library[hidden] {
+  display: none;
+}
+.img-gallery__library button {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  background: var(--ig-surface);
+  cursor: pointer;
+}
+.img-gallery__library button:hover {
+  border-color: var(--ig-border);
+}
+.img-gallery__library button.is-added {
+  border-color: var(--ig-primary);
+}
+.img-gallery__library button.is-added img {
+  opacity: 0.55;
+}
+.img-gallery__library img {
+  display: block;
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.img-gallery__status {
+  min-height: 1.2em;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ig-muted);
+}
+.img-gallery__status.is-error {
+  color: var(--ig-danger);
+}
